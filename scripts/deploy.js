@@ -1,89 +1,245 @@
+// scripts/deploy.js
+// ============================================
+// GembaTicket v2 — Full Deployment Script
+// ============================================
+// Deploys: EventContract721, EventContract1155, ClaimContract, PlatformRegistry
+// Outputs: deployed/<network>-<timestamp>.json
+//
+// Usage:
+//   npx hardhat run scripts/deploy.js --network polygon_amoy
+//   npx hardhat run scripts/deploy.js --network polygon
+//   npx hardhat run scripts/deploy.js --network localhost
+
 const hre = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
-  console.log("Deployer:", deployer.address);
-  console.log("Balance:", hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address)), "ETH\n");
-
-  const FEE_RECIPIENT = process.env.FEE_RECIPIENT || deployer.address;
-
-  const factories = [
-    { name: "GembaERC20Factory",     key: "erc20",    fee: "0.03" },
-    { name: "GembaERC20TaxFactory",  key: "erc20tax", fee: "0.06" },
-    { name: "GembaERC721Factory",    key: "erc721",   fee: "0.05" },
-    { name: "GembaERC1155Factory",   key: "erc1155",  fee: "0.05" },
-  ];
-
-  const deployed = {};
-
-  for (const f of factories) {
-    console.log(`━━━ Deploying ${f.name} ━━━`);
-    const fee = hre.ethers.parseEther(f.fee);
-    const Contract = await hre.ethers.getContractFactory(f.name);
-    const instance = await Contract.deploy(deployer.address, FEE_RECIPIENT, fee);
-    await instance.waitForDeployment();
-    const addr = await instance.getAddress();
-    deployed[f.key] = { address: addr, fee: f.fee + " ETH" };
-    console.log(`  Address: ${addr}  |  Fee: ${f.fee} ETH`);
-  }
-
-  // --- Verify ---
   const network = hre.network.name;
-  if (network !== "hardhat" && network !== "localhost") {
-    console.log("\nWaiting 20s for block explorer indexing...");
-    await new Promise((r) => setTimeout(r, 20000));
+  const chainId = (await hre.ethers.provider.getNetwork()).chainId;
 
-    for (const f of factories) {
-      const fee = hre.ethers.parseEther(f.fee);
-      try {
-        await hre.run("verify:verify", {
-          address: deployed[f.key].address,
-          constructorArguments: [deployer.address, FEE_RECIPIENT, fee],
-        });
-        console.log(`✅ ${f.name} verified`);
-      } catch (err) {
-        console.log(`⚠️  ${f.name}: ${err.message}`);
-      }
-    }
-  }
+  console.log("============================================");
+  console.log("GembaTicket v2 — Deployment");
+  console.log("============================================");
+  console.log(`Network:  ${network} (chainId: ${chainId})`);
+  console.log(`Deployer: ${deployer.address}`);
+  console.log(`Balance:  ${hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address))} ETH/MATIC`);
+  console.log("============================================\n");
 
-  // --- Save JSON ---
-  const deployDir = "./deployed";
-  if (!fs.existsSync(deployDir)) fs.mkdirSync(deployDir, { recursive: true });
+  // =========================================================================
+  // CONFIGURATION
+  // =========================================================================
 
-  const now = new Date();
-  const deployment = {
-    network,
-    chainId: (await hre.ethers.provider.getNetwork()).chainId.toString(),
-    deployer: deployer.address,
-    feeRecipient: FEE_RECIPIENT,
-    factories: deployed,
-    deployedAt: now.toISOString(),
-    blockNumber: (await hre.ethers.provider.getBlockNumber()).toString(),
+  // For testnet: deployer = admin = multisig = signer (same address)
+  // For mainnet: these MUST be different addresses
+  const config = {
+    admin: process.env.ADMIN_ADDRESS || deployer.address,
+    multisig: process.env.MULTISIG_ADDRESS || deployer.address,
+    platformSigner: process.env.PLATFORM_SIGNER_ADDRESS || deployer.address,
+    createEventFee: hre.ethers.parseEther(process.env.CREATE_EVENT_FEE || "0.01"),  // 0.01 MATIC testnet
+    platformFeeBps: parseInt(process.env.PLATFORM_FEE_BPS || "500"),                 // 5%
   };
 
-  const filename = `${network}-${now.toISOString().split("T")[0]}.json`;
-  fs.writeFileSync(path.join(deployDir, filename), JSON.stringify(deployment, null, 2));
-  console.log(`\n📄 Deployment saved to deployed/${filename}`);
+  console.log("Configuration:");
+  console.log(`  Admin:           ${config.admin}`);
+  console.log(`  Multisig:        ${config.multisig}`);
+  console.log(`  Platform Signer: ${config.platformSigner}`);
+  console.log(`  Create Fee:      ${hre.ethers.formatEther(config.createEventFee)} native`);
+  console.log(`  Platform Fee:    ${config.platformFeeBps / 100}%`);
+  console.log("");
 
-  // --- Export ABIs ---
-  const abiDir = "./abi";
-  if (!fs.existsSync(abiDir)) fs.mkdirSync(abiDir);
+  // =========================================================================
+  // STEP 1: Deploy EventContract721 template
+  // =========================================================================
 
-  const contracts = [
-    "GembaERC20Factory", "GembaERC20TaxFactory", "GembaERC721Factory", "GembaERC1155Factory",
-    "GembaERC20", "GembaERC20Tax", "GembaERC721", "GembaERC1155",
-  ];
-  for (const c of contracts) {
-    const artifact = await hre.artifacts.readArtifact(c);
-    fs.writeFileSync(path.join(abiDir, `${c}.json`), JSON.stringify(artifact.abi, null, 2));
+  console.log("[1/5] Deploying EventContract721 template...");
+  const EventContract721 = await hre.ethers.getContractFactory("EventContract721");
+  const event721Template = await EventContract721.deploy();
+  await event721Template.waitForDeployment();
+  const event721Addr = await event721Template.getAddress();
+  console.log(`  ✓ EventContract721 template: ${event721Addr}`);
+  console.log(`    tx: ${event721Template.deploymentTransaction().hash}`);
+
+  // =========================================================================
+  // STEP 2: Deploy EventContract1155 template
+  // =========================================================================
+
+  console.log("\n[2/5] Deploying EventContract1155 template...");
+  const EventContract1155 = await hre.ethers.getContractFactory("EventContract1155");
+  const event1155Template = await EventContract1155.deploy();
+  await event1155Template.waitForDeployment();
+  const event1155Addr = await event1155Template.getAddress();
+  console.log(`  ✓ EventContract1155 template: ${event1155Addr}`);
+  console.log(`    tx: ${event1155Template.deploymentTransaction().hash}`);
+
+  // =========================================================================
+  // STEP 3: Deploy ClaimContract
+  // =========================================================================
+
+  console.log("\n[3/5] Deploying ClaimContract...");
+  const ClaimContract = await hre.ethers.getContractFactory("ClaimContract");
+  const claimContract = await ClaimContract.deploy();
+  await claimContract.waitForDeployment();
+  const claimAddr = await claimContract.getAddress();
+  console.log(`  ✓ ClaimContract: ${claimAddr}`);
+  console.log(`    tx: ${claimContract.deploymentTransaction().hash}`);
+
+  // =========================================================================
+  // STEP 4: Deploy PlatformRegistry
+  // =========================================================================
+
+  console.log("\n[4/5] Deploying PlatformRegistry...");
+  const PlatformRegistry = await hre.ethers.getContractFactory("PlatformRegistry");
+  const registry = await PlatformRegistry.deploy(
+    config.admin,
+    config.multisig,
+    config.platformSigner,
+    claimAddr,
+    event721Addr,
+    event1155Addr,
+    config.createEventFee,
+    config.platformFeeBps
+  );
+  await registry.waitForDeployment();
+  const registryAddr = await registry.getAddress();
+  console.log(`  ✓ PlatformRegistry: ${registryAddr}`);
+  console.log(`    tx: ${registry.deploymentTransaction().hash}`);
+
+  // =========================================================================
+  // STEP 5: Configure ClaimContract → set factory to PlatformRegistry
+  // =========================================================================
+
+  console.log("\n[5/5] Configuring ClaimContract...");
+  const setFactoryTx = await claimContract.setFactory(registryAddr);
+  await setFactoryTx.wait();
+  console.log(`  ✓ ClaimContract.setFactory(${registryAddr})`);
+  console.log(`    tx: ${setFactoryTx.hash}`);
+
+  // =========================================================================
+  // VERIFICATION
+  // =========================================================================
+
+  console.log("\n============================================");
+  console.log("Verifying deployment...");
+  console.log("============================================");
+
+  // Check ClaimContract factory
+  const factoryAddr = await claimContract.factory();
+  console.log(`  ClaimContract.factory() = ${factoryAddr} ${factoryAddr === registryAddr ? "✓" : "✗ MISMATCH"}`);
+
+  // Check PlatformRegistry config
+  const regClaim = await registry.claimContract();
+  const reg721 = await registry.erc721Template();
+  const reg1155 = await registry.erc1155Template();
+  const regSigner = await registry.platformSigner();
+  const regFee = await registry.platformFeeBps();
+
+  console.log(`  Registry.claimContract()  = ${regClaim} ${regClaim === claimAddr ? "✓" : "✗"}`);
+  console.log(`  Registry.erc721Template() = ${reg721} ${reg721 === event721Addr ? "✓" : "✗"}`);
+  console.log(`  Registry.erc1155Template()= ${reg1155} ${reg1155 === event1155Addr ? "✓" : "✗"}`);
+  console.log(`  Registry.platformSigner() = ${regSigner} ${regSigner === config.platformSigner ? "✓" : "✗"}`);
+  console.log(`  Registry.platformFeeBps() = ${regFee} (${Number(regFee) / 100}%)`);
+
+  // =========================================================================
+  // SAVE DEPLOYMENT OUTPUT
+  // =========================================================================
+
+  const deployedDir = path.join(__dirname, "..", "deployed");
+  if (!fs.existsSync(deployedDir)) {
+    fs.mkdirSync(deployedDir, { recursive: true });
   }
-  console.log("📄 ABIs exported to ./abi/");
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `${network}-${timestamp}.json`;
+
+  const deployment = {
+    network: network,
+    chainId: Number(chainId),
+    timestamp: new Date().toISOString(),
+    deployer: deployer.address,
+
+    contracts: {
+      EventContract721: {
+        address: event721Addr,
+        type: "template",
+        tx: event721Template.deploymentTransaction().hash,
+      },
+      EventContract1155: {
+        address: event1155Addr,
+        type: "template",
+        tx: event1155Template.deploymentTransaction().hash,
+      },
+      ClaimContract: {
+        address: claimAddr,
+        type: "singleton",
+        tx: claimContract.deploymentTransaction().hash,
+      },
+      PlatformRegistry: {
+        address: registryAddr,
+        type: "singleton",
+        tx: registry.deploymentTransaction().hash,
+      },
+    },
+
+    configuration: {
+      admin: config.admin,
+      multisig: config.multisig,
+      platformSigner: config.platformSigner,
+      createEventFee: config.createEventFee.toString(),
+      createEventFeeFormatted: hre.ethers.formatEther(config.createEventFee),
+      platformFeeBps: config.platformFeeBps,
+      platformFeePercent: `${config.platformFeeBps / 100}%`,
+    },
+
+    postDeployment: {
+      claimContractFactory: registryAddr,
+    },
+  };
+
+  const filepath = path.join(deployedDir, filename);
+  fs.writeFileSync(filepath, JSON.stringify(deployment, null, 2));
+  console.log(`\n✓ Deployment saved: ${filepath}`);
+
+  // Also save a latest.json symlink-like file
+  const latestPath = path.join(deployedDir, `${network}-latest.json`);
+  fs.writeFileSync(latestPath, JSON.stringify(deployment, null, 2));
+  console.log(`✓ Latest saved:     ${latestPath}`);
+
+  // =========================================================================
+  // SUMMARY
+  // =========================================================================
+
+  console.log("\n============================================");
+  console.log("DEPLOYMENT COMPLETE");
+  console.log("============================================");
+  console.log(`  EventContract721 (template): ${event721Addr}`);
+  console.log(`  EventContract1155 (template): ${event1155Addr}`);
+  console.log(`  ClaimContract (singleton):    ${claimAddr}`);
+  console.log(`  PlatformRegistry (singleton): ${registryAddr}`);
+  console.log("============================================");
+  console.log("");
+  console.log("NEXT STEPS:");
+  console.log("  1. Verify contracts on explorer:");
+  console.log(`     npx hardhat verify --network ${network} ${event721Addr}`);
+  console.log(`     npx hardhat verify --network ${network} ${event1155Addr}`);
+  console.log(`     npx hardhat verify --network ${network} ${claimAddr}`);
+  console.log(`     npx hardhat verify --network ${network} ${registryAddr} \\`);
+  console.log(`       "${config.admin}" "${config.multisig}" "${config.platformSigner}" \\`);
+  console.log(`       "${claimAddr}" "${event721Addr}" "${event1155Addr}" \\`);
+  console.log(`       "${config.createEventFee}" "${config.platformFeeBps}"`);
+  console.log("  2. Fund platform signer wallet with MATIC for gas");
+  console.log("  3. Update .env with contract addresses");
+  console.log("  4. Run integration tests against deployed contracts");
+  console.log("");
+
+  return deployment;
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("\n✗ Deployment FAILED:");
+    console.error(error);
+    process.exit(1);
+  });
