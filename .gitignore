@@ -8,3 +8,4 @@ deployed/
 coverage/
 coverage.json
 *.log
+verify-shm.js
