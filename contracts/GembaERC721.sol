@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title GembaERC721
@@ -28,12 +29,15 @@ contract GembaERC721 is ERC721, ERC2981, Ownable {
     uint256 public maxSupply;
     string private _baseTokenURI;
     string private _contractURI;
+    string private _uriSuffix = ".json";
 
     uint96 public immutable royaltyFee; // basis points, locked at deploy
 
     event BaseURIUpdated(string newBaseURI);
     event ContractURIUpdated(string newContractURI);
+    event URISuffixUpdated(string newSuffix);
     event RoyaltyReceiverUpdated(address indexed oldReceiver, address indexed newReceiver);
+    event CreatedViaGembaTools(address indexed token, string name, string symbol);
 
     /**
      * @param name_            Collection name (Etherscan, MetaMask, browser tab)
@@ -68,6 +72,8 @@ contract GembaERC721 is ERC721, ERC2981, Ownable {
 
         // Set default royalty for all tokens
         _setDefaultRoyalty(royaltyReceiver_, royaltyFee_);
+        
+        emit CreatedViaGembaTools(address(this), name_, symbol_);
     }
 
     // ===================== Minting =====================
@@ -116,6 +122,19 @@ contract GembaERC721 is ERC721, ERC2981, Ownable {
     function setContractURI(string calldata newContractURI) external onlyOwner {
         _contractURI = newContractURI;
         emit ContractURIUpdated(newContractURI);
+    }
+
+    function setURISuffix(string calldata newSuffix) external onlyOwner {
+        _uriSuffix = newSuffix;
+        emit URISuffixUpdated(newSuffix);
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        _requireOwned(tokenId);
+        string memory base = _baseTokenURI;
+        return bytes(base).length > 0
+            ? string(abi.encodePacked(base, Strings.toString(tokenId), _uriSuffix))
+            : "";
     }
 
     function _baseURI() internal view override returns (string memory) {

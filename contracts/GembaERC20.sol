@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -15,6 +15,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract GembaERC20 is ERC20, ERC20Burnable, Ownable {
     uint8 private immutable _decimals;
 
+     event CreatedViaGembaTools(address indexed token, string name, string symbol);
+
     /**
      * @param name_     Token name (e.g. "My Token")
      * @param symbol_   Token symbol (e.g. "MTK", max 8 chars)
@@ -22,6 +24,7 @@ contract GembaERC20 is ERC20, ERC20Burnable, Ownable {
      * @param supply_   Total supply in whole tokens (minted to owner)
      * @param owner_    Address that will own the token and receive the supply
      */
+        
     constructor(
         string memory name_,
         string memory symbol_,
@@ -37,6 +40,8 @@ contract GembaERC20 is ERC20, ERC20Burnable, Ownable {
 
         _decimals = decimals_;
         _mint(owner_, supply_ * (10 ** decimals_));
+        
+        emit CreatedViaGembaTools(address(this), name_, symbol_);
     }
 
     function decimals() public view override returns (uint8) {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -25,6 +25,7 @@ contract GembaERC20Tax is ERC20, ERC20Burnable, Ownable {
     uint256 public constant MAX_TAX = 2500; // 25% max
 
     event TaxAddressUpdated(address indexed oldAddress, address indexed newAddress);
+    event CreatedViaGembaTools(address indexed token, string name, string symbol);
 
     /**
      * @param name_       Token name
@@ -58,6 +59,8 @@ contract GembaERC20Tax is ERC20, ERC20Burnable, Ownable {
         taxFee = taxFee_;
 
         _mint(owner_, supply_ * (10 ** decimals_));
+        
+        emit CreatedViaGembaTools(address(this), name_, symbol_);
     }
 
     function decimals() public view override returns (uint8) {

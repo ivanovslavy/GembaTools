@@ -20,7 +20,7 @@ const accounts = ALL_KEYS.length > 0 ? ALL_KEYS : [ZERO_KEY];
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.27",
     settings: {
       optimizer: {
         enabled: true,
