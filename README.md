@@ -54,7 +54,7 @@ Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
 - **Remove Liquidity** — partial or full removal with fee collection
 - **Lock Liquidity** — permanently lock by transferring position NFT to burn address (shows as "LP Burned" on DexScreener/TokenSniffer)
 
-### 🔧 MANAGE — Token & NFT Management
+### MANAGE — Token & NFT Management
 
 - **Your Collections** — manage ERC721/ERC1155/ERC721A collections, mint NFTs, batch operations
 - **Burn Token** — burn ERC20 tokens from your wallet
