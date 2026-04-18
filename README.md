@@ -246,12 +246,9 @@ Deploy all 6 factories + swap router:
 
 ```bash
 # Testnet
-FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
-SWAP_FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
 npx hardhat run scripts/deploy.js --network sepolia
 
 # Mainnet
-FEE_RECIPIENT=0x... SWAP_FEE_RECIPIENT=0x... \
 npx hardhat run scripts/deploy.js --network ethereum
 ```
 
