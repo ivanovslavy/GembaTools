@@ -1,183 +1,346 @@
-# EduChain: Next Generation Digital Skills for Europe's Children
+# Gemba Tools
 
-[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://kid.slavy.space)
-[![Network](https://img.shields.io/badge/Network-Sepolia_Testnet-orange)](https://sepolia.etherscan.io)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Contact](https://img.shields.io/badge/Contact-Open-purple)](https://kid.slavy.space/contact)
+**No-code smart contract deployment platform with integrated DEX and token presale infrastructure.**
 
-**🇧🇬 [Български](README-bg.md) | 🇬🇧 English**
+Deploy tokens, NFT collections, launch presales, and trade — all from your browser. No coding required.
 
-## 🌟 Why EduChain is Critical for Europe's Future?
-
-The world around us is changing at a pace that schools struggle to keep up with. **Today's children are growing up in an environment where Web3, blockchain, and digital assets are no longer distant future concepts, but present reality.** If schools don't provide them with the knowledge and skills to navigate and protect themselves in this new world, we will leave them vulnerable and unprepared.
-
-**EduChain is the bridge to our children's digital future** - a project created with the clear mission to integrate blockchain and Web3 technologies into the European Union's educational process.
+🌐 **Live Platform:** [gembatools.io](https://gembatools.io)  
+🏢 **Company:** [GEMBA EOOD](https://gembait.com) (EIK: 208656371), Varna, Bulgaria  
+📄 **License:** MIT
 
 ---
 
-## 🎯 Mission and Vision
+## What is Gemba Tools?
 
-### If we want Europe's children to be:
-- **Competitive** in tomorrow's economy → we must start today
-- **Protected online** → we must teach them to understand technologies in depth  
-- **Active creators**, not passive consumers → we must give them the right tools
+Gemba Tools is a web-based SaaS platform where anyone can create and manage blockchain assets without writing code. Connect your wallet, fill in parameters, pay a flat creation fee, and receive a fully independent, verified smart contract that you own forever.
 
-**EduChain is an investment in knowledge, skills, and culture** - a project that will transform how young people view the digital world.
-
----
-
-## 🚀 What is EduChain?
-
-EduChain is **the first educational Web3 platform in the EU**, specifically designed for safe blockchain education for children and youth:
-
-### ✨ Key Features:
-- **🛡️ 100% safe sandbox environment** - test tokens, no financial risk
-- **🎓 Role-based system** - teachers manage, students learn through practice
-- **🔓 100% open source code** - transparency and trust for partners
-- **🌍 EU standards compliant** - GDPR, educational requirements
-
-### 🏗️ Technical Architecture:
-- **Smart Contracts ecosystem** - NFT creation, marketplace, token management
-- **React UI with Web3 integration** - no personal data collection
-- **Ethereum-compatible network** - ready for mainnet deployment
+**Key Principles:**
+- **Non-custodial** — you own your contracts, we never hold your funds or keys
+- **No proxies** — every contract is a standalone deployment with real bytecode, not a proxy or clone
+- **Verified source code** — all contracts are automatically verified on block explorers
+- **Immutable where it matters** — tax rates, royalty fees, and supply caps cannot be changed after deployment
+- **Open source** — full source code available for audit
 
 ---
 
-## 📊 Live Demo - Test Now!
+## Platform Features
 
-### 🌐 **Available demo version:** [kid.slavy.space](https://kid.slavy.space)
-- **Network:** Sepolia Ethereum Testnet
-- **Access:** Public for testing and evaluation
-- **Features:** Complete set of educational tools
+### 🪙 CREATE — Token & NFT Deployment
 
-### 💡 What you can test:
-- **NFT creation** - predefined and custom digital assets
-- **Marketplace trading** - safe trading between students  
-- **Token management** - understanding digital currencies
-- **Role management** - teacher and student interfaces
+| Contract | Description | Fee | Key Features |
+|----------|-------------|-----|--------------|
+| **ERC20 Token** | Standard fungible token | 0.02 ETH | Custom name, symbol, decimals, supply. Burn support. |
+| **ERC20 Tax Token** | Token with transfer tax | 0.03 ETH | Configurable tax rate (max 10%), owner excluded. Immutable after deploy. |
+| **ERC20 Advanced** | Token with tax, presale & anti-bot | 0.07 ETH | Separate buy/sell/transfer tax (max 5% each), built-in presale with dedicated buyer page and embed widget, anti-bot protection, address exclusions, ban list. Presale tokens minted to contract at deployment. |
+| **ERC721 Collection** | NFT collection | 0.04 ETH | ERC2981 royalties, configurable max supply, mint/mintBatch, burn. Auto `.json` URI suffix. OpenSea compatible. |
+| **ERC721A Advanced** | Gas-optimized NFT collection | 0.06 ETH | ERC721A (70-85% gas savings), signature minting, batch transfer/burn up to 100 NFTs, ECDSA replay protection. |
+| **ERC1155 Multi-Token** | Multi-token collection | 0.05 ETH | 1–1000 token IDs, max supply per ID enforced, ERC2981 royalties, burn/burnBatch. No auto-mint at deploy. |
 
----
+### 🔄 SWAP — Integrated DEX
 
-## 🎯 Goals and Impact
+Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
 
-### For Students:
-- **Practical skills** with smart contracts, NFTs, and digital tokens
-- **Understanding transaction signing** and control over digital assets
-- **Development of responsibility and critical thinking** - key qualities in the digital economy
+- **ETH ↔ Token** — platform fee from ETH
+- **Token ↔ ETH** — platform fee from ETH output
+- **Token ↔ Token** — routed through WETH, platform fee always in ETH
+- **ETH ↔ WETH** — wrap/unwrap with platform fee
+- All swaps protected with `ReentrancyGuard` and `deadline` parameter
+- Price quotes via Uniswap V3 QuoterV2
 
-### For Teachers:
-- **New tools and knowledge** for current and practical topics
-- **Preparation as digital mentors** in the new technological world
-- **Pre-training included** in the project budget
+### 💧 LIQUIDITY — Uniswap V3 Management
 
-### For Europe:
-- **Leadership in innovation** and preparation for the digital future
-- **Building a generation of creators**, not just consumers of digital products
-- **Ensuring competitiveness** of European youth in the global economy
+- **Add Liquidity** — create pools or add to existing ones, auto-creates pool if needed
+- **Your Positions** — view all V3 NFT positions with real token amounts
+- **Remove Liquidity** — partial or full removal with fee collection
+- **Lock Liquidity** — permanently lock by transferring position NFT to burn address (shows as "LP Burned" on DexScreener/TokenSniffer)
 
----
+### 🔧 MANAGE — Token & NFT Management
 
-## 🔗 Smart Contract Addresses (Sepolia Testnet)
+- **Your Collections** — manage ERC721/ERC1155/ERC721A collections, mint NFTs, batch operations
+- **Burn Token** — burn ERC20 tokens from your wallet
+- **Burn LP Position** — burn empty V3 position NFTs or lock liquidity forever
+- **Renounce Ownership** — permanently give up contract ownership
+- **Manage Tax Token** — view tax token configuration
+- **Manage Advanced Token** — full dashboard: tax rates, presale (open/end/claim), anti-bot, address exclusions, DEX pair registration, ban list
+- **Update Metadata** — update base URI and contract URI for NFT collections
 
-All smart contracts are deployed and verified on Sepolia testnet:
+### 🎯 PRESALE — Token Launch Infrastructure
 
-| Contract | Address | Etherscan |
-|---------|--------|-----------|
-| **Whitelist** | `0x7822536B51388a7a1D724d32d935Bef922370674` | [View](https://sepolia.etherscan.io/address/0x7822536B51388a7a1D724d32d935Bef922370674) |
-| **Game NFT (Predefined)** | `0x0081DE8Ed70fD57Da89e5D9Bd2C839676D3Fe6E7` | [View](https://sepolia.etherscan.io/address/0x0081DE8Ed70fD57Da89e5D9Bd2C839676D3Fe6E7) |
-| **Game NFT (Custom)** | `0x7634c6979EB8F81005e604b6eb30A4c45b0E35ED` | [View](https://sepolia.etherscan.io/address/0x7634c6979EB8F81005e604b6eb30A4c45b0E35ED) |
-| **Game Token (ERC20)** | `0x91Edcc318A39f9544165989bA9487C5f66C6297F` | [View](https://sepolia.etherscan.io/address/0x91Edcc318A39f9544165989bA9487C5f66C6297F) |
-| **Marketplace** | `0xDc2170b037c1f17e3d449008fc9b8231b01f3603` | [View](https://sepolia.etherscan.io/address/0xDc2170b037c1f17e3d449008fc9b8231b01f3603) |
+Every Advanced Token with presale allocation gets a complete launch system:
 
-> **Note:** For production deployment, mainnet or appropriate Layer 2 networks will be used for cost optimization.
+- **Presale tokens minted to contract at deployment** — no manual transfer needed, MetaMask-safe
+- **Dedicated presale page** — `gembatools.io/presale/{contractAddress}` — shareable link for buyers
+- **Embeddable widget** — iframe code for integration on external websites with "Powered by Gemba Tools"
+- **Presale management** — open with rate and wallet limits, close, finalize (claim ETH + unsold tokens)
+- **Live progress** — real-time sold percentage, remaining tokens, ETH collected
+- **Buyer dashboard** — shows rate, wallet limit, already purchased amount
 
----
+Presale flow:
+1. Deploy Advanced Token with presale amount (e.g., 200M of 1B total supply)
+2. 200M tokens minted to contract, 800M to your wallet
+3. Open presale — set rate and max per wallet
+4. Share presale link or embed widget on your website
+5. Buyers connect wallet and purchase at fixed rate
+6. Close presale → Claim ETH + unsold tokens
 
-## 📈 Project Plan and Budget
+### ℹ️ INFO
 
-### ⏱️ Execution (18 months):
-- **M1–M3:** Partnerships, pedagogical analysis, educational goals
-- **M4–M9:** Smart contract development and testing  
-- **M10–M12:** React UI development and child-focused UX design
-- **M13–M15:** External system audit and final improvements
-- **M16–M18:** Curriculum, materials, and preliminary training
-
-### 💰 Budget (~€522,000):
-- **Blockchain Developer:** €288,000
-- **React Developer:** €144,000
-- **External audit:** €20,000
-- **UX/UI designer:** €15,000
-- **Coordination and training:** €50,000
-- **Equipment and office:** €5,000
-
-### 🔄 Sustainability:
-**The smart contract developer commits** to conducting annual training for teachers and students for **the first 3 years** after official launch, **funded by the EU**.
+- **Token List** — view all tokens created through the platform
+- **About** — platform overview, features, security, company info
 
 ---
 
-## 🤝 Partnership Opportunities
+## Smart Contract Architecture
 
-### 🏫 Educational Institutions
-We seek partnerships with EU schools and universities for:
-- **Pilot implementation** of Web3 education
-- **Joint development** of curricula
-- **Teacher training** in new technologies
+Each factory is a standalone contract carrying the full bytecode of its token template. When a user calls `createToken()`, the factory deploys a fresh, independent contract owned by the caller.
 
-### 🏛️ Funding Organizations  
-We are open to discussions with:
-- **EU funds** and educational programs
-- **Organizations** interested in digital education
-- **Regional authorities** wanting to invest in the future
+```
+User connects wallet
+        │
+        ▼
+┌─────────────────────┐
+│   gembatools.io     │  React frontend
+│   (React + wagmi)   │
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   Factory Contract  │  On-chain (one per token type)
+│   createToken()     │
+└────────┬────────────┘
+         │ deploys
+         ▼
+┌─────────────────────┐
+│   Token Contract    │  Independent, owned by user
+│   (verified)        │  No proxy, no admin backdoor
+└─────────────────────┘
 
-### 👨‍🏫 Teachers and Experts
-We are looking for:
-- **Educators** with interest in technology
-- **Web3 specialists** with educational vision
-- **Researchers** in digital education
+Fee flow: User → Factory → Fee Recipient (immediate forward, factory holds 0 ETH)
+```
 
----
+### Branding
 
-## 📞 Contact Us
-
-### 🌐 **Official contact:** [kid.slavy.space/contact](https://kid.slavy.space/contact)
-
-**Have questions? Want to get involved?** Use our contact form for:
-- Partnership inquiries
-- Technical questions  
-- Pilot implementation
-- Funding and support
-
----
-
-## 🔐 Open Source and Transparency
-
-### 📂 Public Information:
-- ✅ Project documentation and plans
-- ✅ Budget breakdown and timeline
-- ✅ Smart contract addresses and specifications
-- ✅ Demo version for testing
-
-### 🔒 Protected Code:
-**The source code of smart contracts and frontend will not be publicly released until the project is completed.** After completion, they will become public under MIT license.
-
-**Why?** To protect intellectual property until project completion and ensure competitive advantage during development.
+All contracts emit `CreatedViaGembaTools(address indexed token, string name, string symbol)` at deployment — visible in block explorer Logs tab.
 
 ---
 
-## 🌟 Why Right Now?
+## Contracts Overview
 
-**Digital transformation doesn't wait.** Every day we don't prepare our children for the Web3 world is a lost opportunity. Our competitors in Asia and the US are already making similar investments.
+### Token Contracts (6 types)
 
-**EduChain is not just another digital tool - it's a bridge to our children's future.**
+**GembaERC20** — Standard ERC20 with burn support. OpenZeppelin v5.
+
+**GembaERC20Tax** — ERC20 with immutable transfer tax. Tax rate locked at deployment (max 10%). Owner excluded from tax. Tax receiver address configurable.
+
+**GembaERC20Advanced** — Full-featured ERC20 with:
+- Constructor accepts `AdvancedTokenParams` struct (file-level) to avoid stack-too-deep
+- Presale tokens minted to contract at deployment (no manual transfer needed)
+- Separate buy/sell/transfer tax rates (each max 5%, configurable by owner)
+- Owner chooses where tax applies: buy only, sell only, transfer only, or any combination
+- Built-in presale: set rate, max per wallet, open/close, finalize and claim ETH + unsold tokens
+- Dedicated presale buyer page at `gembatools.io/presale/{contractAddress}`
+- Embeddable presale widget (iframe) for external websites
+- Anti-bot protection: configurable duration, max wallet limit, 1 tx per block
+- Address exclusions: manual exclude, optional presale buyer exclusion or reduced rate
+- Ban list: owner can ban addresses (cannot ban self)
+- DEX pair detection: owner adds LP pair addresses for buy/sell tax logic
+- Compatible with Uniswap V2 and V3
+
+**GembaERC721** — NFT collection with ERC2981 royalties. Auto-appends `.json` to tokenURI. Configurable URI suffix via `setURISuffix()`. Mint, mintBatch, burn.
+
+**GembatoolsAdvancedNFT (ERC721A)** — Gas-optimized NFT collection based on Azuki's ERC721A:
+- 70-85% gas savings on batch minting (up to 1,000 per tx)
+- Signature minting (`mintWithSignature`) with ECDSA + replay protection
+- Batch transfer by ID or sequential range (up to 100 per tx)
+- Batch burn (up to 100 per tx)
+- Blocks incoming ETH, ERC20, ERC721, ERC1155 transfers
+- ERC2981 royalties (max 10%)
+
+**GembaERC1155** — Multi-token collection with ERC1155Supply tracking:
+- 1-1000 token IDs, max supply per ID enforced
+- No auto-mint at deploy — owner mints on demand
+- `uri()` returns `baseURI + id + ".json"`
+- ERC2981 royalties, burn/burnBatch
+
+### Swap Router
+
+**GembaSwapRouter** — Wraps Uniswap V3 SwapRouter with platform fee:
+- 0.3% fee on every swap, always collected as ETH
+- Token → Token routed through WETH (two hops) for consistent ETH fee collection
+- ETH ↔ WETH wrap/unwrap with fee
+- `ReentrancyGuard` + `deadline` on all functions
+- Max fee hardcapped at 1% (100bp)
+- Owner can adjust fee and fee recipient
 
 ---
 
-## 📄 License
+## Security
 
-This project is licensed under [MIT License](LICENSE) - open source code will be publicly available after project completion.
+All contracts have been analyzed with Slither static analysis.
+
+| Feature | Implementation |
+|---------|---------------|
+| Reentrancy protection | OpenZeppelin `ReentrancyGuard` on all state-changing functions |
+| Access control | `Ownable` pattern with ownership transfer |
+| Fee caps | Hard-coded maximum tax (5-10%) and swap fee (1%) |
+| Input validation | All constructor and function parameters validated |
+| CEI pattern | Checks-Effects-Interactions ordering in all ETH-handling functions |
+| No proxy patterns | Every contract is standalone — no delegatecall, no Diamond, no UUPS |
+| Replay protection | ECDSA signatures with `usedSignatures` mapping (ERC721A) |
+| Front-running protection | Validate-then-execute pattern on batch operations |
 
 ---
 
-**Made with ❤️ for the future of European education**
+## Tech Stack
 
-> *"If we want Europe to remain a leader in innovation, we must build a generation that knows how to create, not just consume digital products."*
+### Smart Contracts
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Solidity | 0.8.24 / 0.8.27 | Smart contract language |
+| Hardhat | 2.x | Development & testing |
+| OpenZeppelin | v5 | Security standards |
+| ERC721A (Azuki) | latest | Gas-optimized NFT |
+| Slither | latest | Security analysis |
+
+### Frontend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 18 | UI framework |
+| Vite | 6 | Build tool |
+| wagmi | v2 | Wallet connection & contract interaction |
+| viem | latest | Ethereum utilities |
+| @tanstack/react-query | latest | Async state management |
+
+### Infrastructure
+| Service | Purpose |
+|---------|---------|
+| Hetzner VPS | Application hosting |
+| Cloudflare | DNS, SSL, DDoS protection |
+| Apache | Reverse proxy |
+| systemd | Process management |
+
+---
+
+## Deployment
+
+### Setup
+
+```bash
+git clone https://github.com/ivanovslavy/GembaTools.git
+cd GembaTools
+npm install
+cp .env.example .env
+```
+
+### Deploy
+
+Deploy all 6 factories + swap router:
+
+```bash
+# Testnet
+FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
+SWAP_FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
+npx hardhat run scripts/deploy.js --network sepolia
+
+# Mainnet
+FEE_RECIPIENT=0x... SWAP_FEE_RECIPIENT=0x... \
+npx hardhat run scripts/deploy.js --network ethereum
+```
+
+The script deploys all contracts, verifies on block explorers, saves addresses to `deployed/`, and exports ABIs to `abi/`.
+
+### Supported Networks
+
+| Network | Chain ID | Status |
+|---------|----------|--------|
+| Ethereum | 1 | Production |
+| BSC | 56 | Production |
+| Polygon | 137 | Production |
+| Base | 8453 | Production |
+| Sepolia | 11155111 | Testnet |
+
+### Deployed Contracts — Sepolia Testnet
+
+| Contract | Address | Fee |
+|----------|---------|-----|
+| GembaERC20Factory | [`0xF3aB51315BbC26ea4e3a509d5bE139d1246a999E`](https://sepolia.etherscan.io/address/0xF3aB51315BbC26ea4e3a509d5bE139d1246a999E) | 0.02 ETH |
+| GembaERC20TaxFactory | [`0x722191FBef1960fa4e23771946D94A2051D5f2Ae`](https://sepolia.etherscan.io/address/0x722191FBef1960fa4e23771946D94A2051D5f2Ae) | 0.03 ETH |
+| GembaERC721Factory | [`0xcC95A4A33C4b7e769CfB6841Ec92B922266Df26E`](https://sepolia.etherscan.io/address/0xcC95A4A33C4b7e769CfB6841Ec92B922266Df26E) | 0.04 ETH |
+| GembaERC1155Factory | [`0xFA99A9EBc5b180f6538cD4959f8d9Fb20C26E4f0`](https://sepolia.etherscan.io/address/0xFA99A9EBc5b180f6538cD4959f8d9Fb20C26E4f0) | 0.05 ETH |
+| GembaERC721AFactory | [`0xe6acD89ac14667c95878A71F44c4233Dd0bEcf5f`](https://sepolia.etherscan.io/address/0xe6acD89ac14667c95878A71F44c4233Dd0bEcf5f) | 0.06 ETH |
+| GembaERC20AdvancedFactory | [`0x8D821d2440Be64D7de39188Aac4Af769F2538e4C`](https://sepolia.etherscan.io/address/0x8D821d2440Be64D7de39188Aac4Af769F2538e4C) | 0.07 ETH |
+| GembaSwapRouter | [`0x8405CEB8212a9e725162C78aBF5Adebab5820387`](https://sepolia.etherscan.io/address/0x8405CEB8212a9e725162C78aBF5Adebab5820387) | 0.3% (30bp) |
+
+Deployer: `0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298`  
+Fee Recipient: `0x65124A08c9BFE0A7176668EE351573059Ea38ccC`
+
+---
+
+## Revenue Model
+
+| Source | Type | Description |
+|--------|------|-------------|
+| Token creation fees | One-time | 0.02–0.07 ETH per contract deployment |
+| Swap platform fee | Recurring | 0.3% of every swap volume |
+| Presale infrastructure | Viral | Free — drives platform adoption and brand exposure via embed widgets |
+
+---
+
+## Project Structure
+
+```
+GembaTools/
+├── contracts/
+│   ├── GembaERC20.sol                 # Standard ERC20
+│   ├── GembaERC20Factory.sol
+│   ├── GembaERC20Tax.sol              # ERC20 with immutable tax
+│   ├── GembaERC20TaxFactory.sol
+│   ├── GembaERC20Advanced.sol         # ERC20 with tax + presale + anti-bot
+│   ├── GembaERC20AdvancedFactory.sol
+│   ├── GembaERC721.sol                # NFT collection
+│   ├── GembaERC721Factory.sol
+│   ├── GembatoolsAdvancedNFT.sol      # Gas-optimized NFT (ERC721A)
+│   ├── GembaERC721AFactory.sol
+│   ├── GembaERC1155.sol               # Multi-token collection
+│   ├── GembaERC1155Factory.sol
+│   └── GembaSwapRouter.sol            # DEX swap with platform fee
+├── scripts/
+│   └── deploy.js                      # Deploy all contracts
+├── deployed/                          # Deployment records
+├── abi/                               # Exported ABIs
+├── hardhat.config.js
+├── .env.example
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Competitors
+
+| Platform | Token Types | Swap/DEX | Presale Platform | Verified | Non-Proxy | Price |
+|----------|-------------|----------|-----------------|----------|-----------|-------|
+| **Gemba Tools** | 6 types | ✅ Uniswap V3 | ✅ Page + Embed | ✅ | ✅ | 0.02–0.07 ETH |
+| Bedrocktools | 3 types | ❌ | ❌ | ✅ | ❌ (proxy) | 0.02–0.05 ETH |
+| SmartContracts.tools | 2 types | ❌ | ❌ | ✅ | ✅ | 0.01–0.03 ETH |
+| Bitbond TokenTool | 4 types | ❌ | ❌ | ✅ | ❌ | Subscription |
+| PinkSale | 1 type | ❌ | ✅ (centralized) | ❌ | ❌ | 1-2% fee |
+
+---
+
+## Links
+
+| Resource | URL |
+|----------|-----|
+| Platform | [gembatools.io](https://gembatools.io) |
+| GitHub | [github.com/ivanovslavy/GembaTools](https://github.com/ivanovslavy/GembaTools) |
+| Company | [gembait.com](https://gembait.com) |
+| Contact | contacts@gembait.com |
+
+---
+
+## License
+
+MIT License — Copyright (c) 2025-2026 GEMBA EOOD
+
+**Built by [GEMBA EOOD](https://gembait.com) — Blockchain Technology Studio, Varna, Bulgaria**
