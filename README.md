@@ -4,9 +4,9 @@
 
 Deploy tokens, NFT collections, launch presales, and trade — all from your browser. No coding required.
 
-🌐 **Live Platform:** [gembatools.io](https://gembatools.io)  
-🏢 **Company:** [GEMBA EOOD](https://gembait.com) (EIK: 208656371), Varna, Bulgaria  
-📄 **License:** MIT
+**Live Platform:** [gembatools.io](https://gembatools.io)  
+**Company:** [GEMBA EOOD](https://gembait.com) (EIK: 208656371), Varna, Bulgaria  
+**License:** MIT
 
 ---
 
@@ -25,7 +25,7 @@ Gemba Tools is a web-based SaaS platform where anyone can create and manage bloc
 
 ## Platform Features
 
-### 🪙 CREATE — Token & NFT Deployment
+### CREATE — Token & NFT Deployment
 
 | Contract | Description | Fee | Key Features |
 |----------|-------------|-----|--------------|
@@ -36,7 +36,7 @@ Gemba Tools is a web-based SaaS platform where anyone can create and manage bloc
 | **ERC721A Advanced** | Gas-optimized NFT collection | 0.06 ETH | ERC721A (70-85% gas savings), signature minting, batch transfer/burn up to 100 NFTs, ECDSA replay protection. |
 | **ERC1155 Multi-Token** | Multi-token collection | 0.05 ETH | 1–1000 token IDs, max supply per ID enforced, ERC2981 royalties, burn/burnBatch. No auto-mint at deploy. |
 
-### 🔄 SWAP — Integrated DEX
+### SWAP — Integrated DEX
 
 Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
 
@@ -47,7 +47,7 @@ Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
 - All swaps protected with `ReentrancyGuard` and `deadline` parameter
 - Price quotes via Uniswap V3 QuoterV2
 
-### 💧 LIQUIDITY — Uniswap V3 Management
+### LIQUIDITY — Uniswap V3 Management
 
 - **Add Liquidity** — create pools or add to existing ones, auto-creates pool if needed
 - **Your Positions** — view all V3 NFT positions with real token amounts
@@ -64,7 +64,7 @@ Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
 - **Manage Advanced Token** — full dashboard: tax rates, presale (open/end/claim), anti-bot, address exclusions, DEX pair registration, ban list
 - **Update Metadata** — update base URI and contract URI for NFT collections
 
-### 🎯 PRESALE — Token Launch Infrastructure
+### PRESALE — Token Launch Infrastructure
 
 Every Advanced Token with presale allocation gets a complete launch system:
 
@@ -83,7 +83,7 @@ Presale flow:
 5. Buyers connect wallet and purchase at fixed rate
 6. Close presale → Claim ETH + unsold tokens
 
-### ℹ️ INFO
+### INFO
 
 - **Token List** — view all tokens created through the platform
 - **About** — platform overview, features, security, company info
