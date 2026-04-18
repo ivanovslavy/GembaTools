@@ -1,8 +1,8 @@
 # Gemba Tools
 
-**No-code smart contract deployment platform with integrated DEX and token presale infrastructure.**
+**No-code smart contract deployment platform with integrated DEX, token presale infrastructure, and NFT gallery.**
 
-Deploy tokens, NFT collections, launch presales, and trade — all from your browser. No coding required.
+Deploy tokens, NFT collections, launch presales, showcase your NFTs, and trade — all from your browser. No coding required.
 
 **Live Platform:** [gembatools.io](https://gembatools.io)  
 **Company:** [GEMBA EOOD](https://gembait.com) (EIK: 208656371), Varna, Bulgaria  
@@ -82,6 +82,18 @@ Presale flow:
 4. Share presale link or embed widget on your website
 5. Buyers connect wallet and purchase at fixed rate
 6. Close presale → Claim ETH + unsold tokens
+
+### GALLERY — NFT Collection Viewer
+
+Every NFT collection deployed through Gemba Tools gets a gallery page:
+
+- **Gallery page** — `gembatools.io/gallery/{contractAddress}` — browse all minted NFTs
+- **Metadata display** — images, names, descriptions, attributes from IPFS/HTTP metadata
+- **Multi-standard support** — ERC721, ERC721A, and ERC1155 collections auto-detected
+- **Detail modal** — click any NFT for full-size image, all attributes, owner, and Etherscan link
+- **Embeddable widget** — iframe code to showcase your collection on external websites
+- **IPFS gateway** — automatic `ipfs://` to HTTP gateway resolution
+- **Lazy loading** — loads NFTs in batches with skeleton placeholders
 
 ### INFO
 
@@ -246,9 +258,12 @@ Deploy all 6 factories + swap router:
 
 ```bash
 # Testnet
+FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
+SWAP_FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
 npx hardhat run scripts/deploy.js --network sepolia
 
 # Mainnet
+FEE_RECIPIENT=0x... SWAP_FEE_RECIPIENT=0x... \
 npx hardhat run scripts/deploy.js --network ethereum
 ```
 
@@ -287,7 +302,7 @@ Fee Recipient: `0x65124A08c9BFE0A7176668EE351573059Ea38ccC`
 |--------|------|-------------|
 | Token creation fees | One-time | 0.02–0.07 ETH per contract deployment |
 | Swap platform fee | Recurring | 0.3% of every swap volume |
-| Presale infrastructure | Viral | Free — drives platform adoption and brand exposure via embed widgets |
+| Presale & Gallery | Viral | Free — drives platform adoption and brand exposure via embed widgets |
 
 ---
 
@@ -323,13 +338,13 @@ GembaTools/
 
 ## Competitors
 
-| Platform | Token Types | Swap/DEX | Presale Platform | Verified | Non-Proxy | Price |
-|----------|-------------|----------|-----------------|----------|-----------|-------|
-| **Gemba Tools** | 6 types | ✅ Uniswap V3 | ✅ Page + Embed | ✅ | ✅ | 0.02–0.07 ETH |
-| Bedrocktools | 3 types | ❌ | ❌ | ✅ | ❌ (proxy) | 0.02–0.05 ETH |
-| SmartContracts.tools | 2 types | ❌ | ❌ | ✅ | ✅ | 0.01–0.03 ETH |
-| Bitbond TokenTool | 4 types | ❌ | ❌ | ✅ | ❌ | Subscription |
-| PinkSale | 1 type | ❌ | ✅ (centralized) | ❌ | ❌ | 1-2% fee |
+| Platform | Token Types | Swap/DEX | Presale Platform | NFT Gallery | Verified | Non-Proxy | Price |
+|----------|-------------|----------|-----------------|-------------|----------|-----------|-------|
+| **Gemba Tools** | 6 types | ✅ Uniswap V3 | ✅ Page + Embed | ✅ + Embed | ✅ | ✅ | 0.02–0.07 ETH |
+| Bedrocktools | 3 types | ❌ | ❌ | ❌ | ✅ | ❌ (proxy) | 0.02–0.05 ETH |
+| SmartContracts.tools | 2 types | ❌ | ❌ | ❌ | ✅ | ✅ | 0.01–0.03 ETH |
+| Bitbond TokenTool | 4 types | ❌ | ❌ | ❌ | ✅ | ❌ | Subscription |
+| PinkSale | 1 type | ❌ | ✅ (centralized) | ❌ | ❌ | ❌ | 1-2% fee |
 
 ---
 
