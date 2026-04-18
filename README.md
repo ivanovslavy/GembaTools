@@ -232,6 +232,14 @@ npm install
 cp .env.example .env
 ```
 
+Edit `.env` with your private key, RPC URLs, and block explorer API keys.
+
+### Compile
+
+```bash
+npx hardhat compile
+```
+
 ### Deploy
 
 Deploy all 6 factories + swap router:
