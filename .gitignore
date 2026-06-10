@@ -9,3 +9,14 @@ coverage/
 coverage.json
 *.log
 verify-shm.js
+.env.*
+!.env.example
+*.key
+*.pem
+*mnemonic*
+keyring*
+.claude/
+CLAUDE.md
+claude.md
+progress.md
+PROGRESS.md
