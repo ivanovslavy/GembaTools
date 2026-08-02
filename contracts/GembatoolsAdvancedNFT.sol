@@ -86,15 +86,22 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
         bytes memory signature
         ) external nonReentrant {
         
-        // Create message hash
-        bytes32 messageHash = keccak256(abi.encodePacked(to, orderId, nonce));
+        // Create message hash — bound to THIS contract and THIS chain so a single
+        // owner signature cannot be replayed on another collection or another
+        // network (address(this) + block.chainid close the cross-contract /
+        // cross-chain replay hole).
+        bytes32 messageHash = keccak256(abi.encodePacked(to, orderId, nonce, address(this), block.chainid));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        
+
         // Verify signature
         address signer = ethSignedMessageHash.recover(signature);
         require(signer == owner(), "Invalid signature");
+        // An orderId authorises exactly one mint — enforce it (usedOrders was
+        // previously written but never checked). usedSignatures is kept as a
+        // second, hash-level guard against exact-signature replay.
+        require(!usedOrders[orderId], "Order already used");
         require(!usedSignatures[ethSignedMessageHash], "Signature already used");
-        
+
         // Mark as used
         usedSignatures[ethSignedMessageHash] = true;
         usedOrders[orderId] = true;

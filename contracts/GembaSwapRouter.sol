@@ -135,9 +135,14 @@ contract GembaSwapRouter is Ownable, ReentrancyGuard {
     ) external nonReentrant checkDeadline(deadline) returns (uint256 amountOut) {
         require(amountIn > 0, "zero amount");
 
-        // Pull tokens from user
+        // Pull tokens from user — measure the amount ACTUALLY received so
+        // fee-on-transfer tokens (which deliver less than amountIn) don't leave
+        // the router short and revert the swap (A3). forceApprove handles
+        // non-standard tokens that require a zero-then-set allowance (A4).
+        uint256 balBefore = IERC20(tokenIn).balanceOf(address(this));
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-        IERC20(tokenIn).approve(address(uniswapRouter), amountIn);
+        uint256 received = IERC20(tokenIn).balanceOf(address(this)) - balBefore;
+        IERC20(tokenIn).forceApprove(address(uniswapRouter), received);
 
         // Swap to WETH (receive here, not to user)
         uint256 wethReceived = uniswapRouter.exactInputSingle(
@@ -146,7 +151,7 @@ contract GembaSwapRouter is Ownable, ReentrancyGuard {
                 tokenOut: address(WETH9),
                 fee: poolFee,
                 recipient: address(this),
-                amountIn: amountIn,
+                amountIn: received,
                 amountOutMinimum: amountOutMinimum,
                 sqrtPriceLimitX96: sqrtPriceLimitX96
             })
@@ -192,18 +197,21 @@ contract GembaSwapRouter is Ownable, ReentrancyGuard {
     ) external nonReentrant checkDeadline(deadline) returns (uint256 amountOut) {
         require(amountIn > 0, "zero amount");
 
-        // Pull tokens from user
+        // Pull tokens from user — measure actual received for fee-on-transfer
+        // tokens (A3); forceApprove for non-standard allowance tokens (A4).
+        uint256 balBefore = IERC20(tokenIn).balanceOf(address(this));
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
+        uint256 received = IERC20(tokenIn).balanceOf(address(this)) - balBefore;
 
         // Hop 1: tokenIn → WETH (receive here)
-        IERC20(tokenIn).approve(address(uniswapRouter), amountIn);
+        IERC20(tokenIn).forceApprove(address(uniswapRouter), received);
         uint256 wethReceived = uniswapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: address(WETH9),
                 fee: poolFeeIn,
                 recipient: address(this),
-                amountIn: amountIn,
+                amountIn: received,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             })
@@ -223,7 +231,7 @@ contract GembaSwapRouter is Ownable, ReentrancyGuard {
         WETH9.deposit{value: remainingETH}();
 
         // Hop 2: WETH → tokenOut (send to user)
-        IWETH9(address(WETH9)).approve(address(uniswapRouter), remainingETH);
+        IERC20(address(WETH9)).forceApprove(address(uniswapRouter), remainingETH);
         amountOut = uniswapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
                 tokenIn: address(WETH9),
@@ -254,9 +262,9 @@ contract GembaSwapRouter is Ownable, ReentrancyGuard {
             require(sent, "fee transfer failed");
         }
 
-        // Wrap remaining ETH
+        // Wrap remaining ETH — check the transfer return value (A6/Slither)
         WETH9.deposit{value: wethAmount}();
-        WETH9.transfer(msg.sender, wethAmount);
+        require(WETH9.transfer(msg.sender, wethAmount), "weth transfer failed");
 
         emit SwapExecuted(msg.sender, address(0), address(WETH9), msg.value, wethAmount, fee);
     }

@@ -1,0 +1,8 @@
+{
+  "remappings": [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "erc721a/=node_modules/erc721a/"
+  ],
+  "optimizer": { "enabled": true, "runs": 200 },
+  "viaIR": true
+}
