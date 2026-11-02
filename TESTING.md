@@ -7,8 +7,8 @@ Sepolia has and GembaBlockchain does not).
 
 | Layer | Tool | What it does |
 |-------|------|--------------|
-| unit / access / attacks / invariants | Hardhat + Mocha/Chai | 41 tests over every contract, guard, event, boundary + real attacker contracts |
-| property fuzzing + stateful invariants | Foundry (`forge`) | 2 fuzz ×10 000 runs + 2 invariants ×10 240 calls |
+| unit / access / attacks / invariants | Hardhat + Mocha/Chai | 73 tests (41 original + 16 fee-voucher + 11 PersonalWallet factory + 5 owner mint-signer tool) |
+| property fuzzing + stateful invariants | Foundry (`forge`) | 3 fuzz ×10 000 runs + 3 invariants ×10 240 calls (incl. replayed / stolen / under-paid vouchers, PersonalWallet owner sets) |
 | static analysis | Slither | 33 results, 0 high (see classification below) |
 | symbolic execution | Mythril | all 13 production contracts — 0 issues |
 | local E2E dry-run | Hardhat script | full deploy→create→attack→sweep flow on a local node |
@@ -31,13 +31,16 @@ suite needs (funding key, sweep targets, Sepolia RPC, Uniswap V3 addresses).
 
 ## 1. Hardhat suite (unit + access + attacks + invariants)
 ```bash
-npx hardhat test                 # all 39 tests
+npx hardhat test                 # all 73 tests
 npx hardhat coverage             # line/branch coverage
 ```
 Files (`test/`): `helpers/fixtures.js` deploys all 6 factories + the swap router
 (mocked Uniswap) + actors; `01`..`06` cover each token/NFT template; `07` the
 factories (fee/refund/access); `08` the swap router (fee/slippage/wrap/deadline);
-`09` the attacker contracts; `10` cross-cutting invariants.
+`09` the attacker contracts; `10` cross-cutting invariants; `11` fee vouchers (single use, bound to
+creator/type/chain/factory, expiry, fail-closed signer, malleability); `12` the PersonalWallet factory (audited
+bytecode, 2-of-3 flows, veto, errors); `13` the owner's mint-signature tool (`tools/mint-signer.js`).
+Contract canaries (each re-introduced defect must turn the suite red): `~/Documents/Claude/GembaTools-scripts/canary-contracts.py`.
 
 Attacker/mock contracts (`contracts/test/`): `Mocks.sol` (MockERC20/721,
 MockWETH9, MockSwapRouter), `FeeOnTransferERC20`, `Attackers.sol`

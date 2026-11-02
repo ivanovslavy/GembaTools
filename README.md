@@ -12,7 +12,7 @@ Deploy tokens, NFT collections, launch presales, showcase your NFTs, and trade �
 
 ## What is Gemba Tools?
 
-Gemba Tools is a web-based SaaS platform where anyone can create and manage blockchain assets without writing code. Connect your wallet, fill in parameters, pay a flat creation fee, and receive a fully independent, verified smart contract that you own forever.
+Gemba Tools is a web-based SaaS platform where anyone can create and manage blockchain assets without writing code. Connect your wallet, fill in parameters, pay the creation fee (a EUR price per contract type — through GembaPay, or in the network's own coin at GembaPay's rate), and receive a fully independent, verified smart contract that you own forever.
 
 **Key Principles:**
 - **Non-custodial** — you own your contracts, we never hold your funds or keys
@@ -27,14 +27,25 @@ Gemba Tools is a web-based SaaS platform where anyone can create and manage bloc
 
 ### CREATE — Token & NFT Deployment
 
-| Contract | Description | Fee | Key Features |
-|----------|-------------|-----|--------------|
-| **ERC20 Token** | Standard fungible token | 0.02 ETH | Custom name, symbol, decimals, supply. Burn support. |
-| **ERC20 Tax Token** | Token with transfer tax | 0.03 ETH | Configurable tax rate (max 10%), owner excluded. Immutable after deploy. |
-| **ERC20 Advanced** | Token with tax, presale & anti-bot | 0.07 ETH | Separate buy/sell/transfer tax (max 5% each), built-in presale with dedicated buyer page and embed widget, anti-bot protection, address exclusions, ban list. Presale tokens minted to contract at deployment. |
-| **ERC721 Collection** | NFT collection | 0.04 ETH | ERC2981 royalties, configurable max supply, mint/mintBatch, burn. Auto `.json` URI suffix. OpenSea compatible. |
-| **ERC721A Advanced** | Gas-optimized NFT collection | 0.06 ETH | ERC721A (70-85% gas savings), signature minting, batch transfer/burn up to 100 NFTs, ECDSA replay protection. |
-| **ERC1155 Multi-Token** | Multi-token collection | 0.05 ETH | 1–1000 token IDs, max supply per ID enforced, ERC2981 royalties, burn/burnBatch. No auto-mint at deploy. |
+| Contract | Description | Price | Key Features |
+|----------|-------------|-------|--------------|
+| **ERC20 Token** | Standard fungible token | €29 | Custom name, symbol, decimals, supply. Burn support. |
+| **ERC20 Tax Token** | Token with transfer tax | €49 | Configurable tax rate (max 25 %, `MAX_TAX = 2500` bp), owner excluded. Immutable after deploy. |
+| **ERC721 Collection** | NFT collection | €59 | ERC2981 royalties (max 10 %), configurable max supply, mint/mintBatch, burn. Auto `.json` URI suffix. OpenSea compatible. |
+| **ERC1155 Multi-Token** | Multi-token collection | €69 | 1–1000 token IDs, max supply per ID enforced, ERC2981 royalties, burn/burnBatch. No auto-mint at deploy. |
+| **ERC721A Advanced** | Gas-optimized NFT collection | €89 | ERC721A batch minting, owner-signed signature minting (one orderId = one mint), batch transfer/burn up to 100 NFTs. |
+| **ERC20 Advanced** | Token with tax, presale & anti-bot | €119 | Separate buy/sell/transfer tax (max 5 % each), built-in presale with buyer page and embed widget, anti-bot, exclusions, ban list. |
+| **Personal Wallet** | 2-of-3 multisig savings wallet | €199 | The separately audited [PersonalWallet](https://github.com/ivanovslavy/personal-wallet), byte-for-byte: 2 of 3 owners move funds, a new recipient needs all 3 + a 72 h timelock that any one owner can veto, strict recipient/token allowlists, native/ERC-20/ERC-721/ERC-1155. |
+
+**How the price is paid** (a backend switch, `GEMBAPAY_FEES` — see [docs/FEES.md](docs/FEES.md)):
+- **GembaPay mode** — the EUR price is paid through GembaPay by card or PayPal, or in GMB at a 20 % discount when
+  GembaPay offers GMB. The backend confirms the order with GembaPay and signs a one-time voucher with fee 0.
+- **On-chain mode** — the same EUR price is converted to the network's coin (ETH, GMB, …) at GembaPay's rate and
+  paid with the deploy transaction; the voucher carries that amount and the factory checks it.
+
+Either way every factory creates **only** with that voucher (EIP-712, bound to creator + contract type + chain +
+factory + a single-use order id + a deadline — [`contracts/fees/FeeVoucher.sol`](contracts/fees/FeeVoucher.sol)).
+There is no fixed on-chain fee any more (the old 0.02–0.07 "ETH on every chain" is gone).
 
 ### SWAP — Integrated DEX
 
@@ -127,12 +138,13 @@ User connects wallet
 │   (verified)        │  No proxy, no admin backdoor
 └─────────────────────┘
 
-Fee flow: User → Factory → Fee Recipient (immediate forward, factory holds 0 ETH)
+Fee flow: backend voucher (EIP-712) → User → Factory: checks the voucher, burns its order id, forwards exactly the
+voucher's native fee (0 when paid through GembaPay) to the Fee Recipient, refunds any excess — the factory holds 0.
 ```
 
 ### Branding
 
-All contracts emit `CreatedViaGembaTools(address indexed token, string name, string symbol)` at deployment — visible in block explorer Logs tab.
+The token/NFT templates emit `CreatedViaGembaTools(address indexed token, string name, string symbol)` at deployment — visible in the block explorer Logs tab. (PersonalWallet is vendored unchanged and does not.)
 
 ---
 
@@ -142,7 +154,7 @@ All contracts emit `CreatedViaGembaTools(address indexed token, string name, str
 
 **GembaERC20** — Standard ERC20 with burn support. OpenZeppelin v5.
 
-**GembaERC20Tax** — ERC20 with immutable transfer tax. Tax rate locked at deployment (max 10%). Owner excluded from tax. Tax receiver address configurable.
+**GembaERC20Tax** — ERC20 with immutable transfer tax. Tax rate locked at deployment (max 25 %, `MAX_TAX = 2500` bp). Owner excluded from tax. Tax receiver address configurable.
 
 **GembaERC20Advanced** — Full-featured ERC20 with:
 - Constructor accepts `AdvancedTokenParams` struct (file-level) to avoid stack-too-deep
@@ -254,45 +266,41 @@ npx hardhat compile
 
 ### Deploy
 
-Deploy all 6 factories + swap router:
+Deploy the 6 voucher-gated factories + the PersonalWallet factory (testnets only — the script refuses any other
+chain id; the swap router is deployed separately by `scripts/deploy-production.js` and has no creation fee):
 
 ```bash
-# Testnet
-FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
-SWAP_FEE_RECIPIENT=0x65124A08c9BFE0A7176668EE351573059Ea38ccC \
-npx hardhat run scripts/deploy.js --network sepolia
-
-# Mainnet
-FEE_RECIPIENT=0x... SWAP_FEE_RECIPIENT=0x... \
-npx hardhat run scripts/deploy.js --network ethereum
+OWNER=0x… FEE_RECIPIENT=0x… VOUCHER_SIGNER=<address of the backend voucher key> \
+  npx hardhat run scripts/deploy-vouchers.js --network sepolia        # or --network gembatestnet
+npx hardhat run scripts/verify-vouchers.js --network sepolia          # Etherscan V2
+npx hardhat run scripts/verify-blockscout.js --network gembatestnet   # gembascan (Blockscout)
 ```
 
-The script deploys all contracts, verifies on block explorers, saves addresses to `deployed/`, and exports ABIs to `abi/`.
+The deploy record is written to `scripts/deployed-vouchers-<network>.json`.
 
 ### Supported Networks
 
-| Network | Chain ID | Status |
-|---------|----------|--------|
-| Ethereum | 1 | Production |
-| BSC | 56 | Production |
-| Polygon | 137 | Production |
-| Base | 8453 | Production |
-| Sepolia | 11155111 | Testnet |
+**Testnets only.** Nothing is deployed on any mainnet.
 
-### Deployed Contracts — Sepolia Testnet
+| Network | Chain ID | Native coin | What is deployed |
+|---------|----------|-------------|------------------|
+| Sepolia | 11155111 | ETH | 7 factories (voucher-gated) + GembaSwapRouter (Uniswap V3) |
+| GembaBlockchain Testnet | 821207 | GMB | 7 factories (voucher-gated); no swap (no Uniswap V3 there) |
 
-| Contract | Address | Fee |
-|----------|---------|-----|
-| GembaERC20Factory | [`0xF3aB51315BbC26ea4e3a509d5bE139d1246a999E`](https://sepolia.etherscan.io/address/0xF3aB51315BbC26ea4e3a509d5bE139d1246a999E) | 0.02 ETH |
-| GembaERC20TaxFactory | [`0x722191FBef1960fa4e23771946D94A2051D5f2Ae`](https://sepolia.etherscan.io/address/0x722191FBef1960fa4e23771946D94A2051D5f2Ae) | 0.03 ETH |
-| GembaERC721Factory | [`0xcC95A4A33C4b7e769CfB6841Ec92B922266Df26E`](https://sepolia.etherscan.io/address/0xcC95A4A33C4b7e769CfB6841Ec92B922266Df26E) | 0.04 ETH |
-| GembaERC1155Factory | [`0xFA99A9EBc5b180f6538cD4959f8d9Fb20C26E4f0`](https://sepolia.etherscan.io/address/0xFA99A9EBc5b180f6538cD4959f8d9Fb20C26E4f0) | 0.05 ETH |
-| GembaERC721AFactory | [`0xe6acD89ac14667c95878A71F44c4233Dd0bEcf5f`](https://sepolia.etherscan.io/address/0xe6acD89ac14667c95878A71F44c4233Dd0bEcf5f) | 0.06 ETH |
-| GembaERC20AdvancedFactory | [`0x8D821d2440Be64D7de39188Aac4Af769F2538e4C`](https://sepolia.etherscan.io/address/0x8D821d2440Be64D7de39188Aac4Af769F2538e4C) | 0.07 ETH |
-| GembaSwapRouter | [`0x8405CEB8212a9e725162C78aBF5Adebab5820387`](https://sepolia.etherscan.io/address/0x8405CEB8212a9e725162C78aBF5Adebab5820387) | 0.3% (30bp) |
+### Deployed Contracts (2026-11-02, all verified)
 
-Deployer: `0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298`  
-Fee Recipient: `0x65124A08c9BFE0A7176668EE351573059Ea38ccC`
+Voucher signer (backend key): `0xcbD92139F15108Dc95590D74dC8A83a4946CE535` · Owner: `0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298` · Fee recipient: `0x65124A08c9BFE0A7176668EE351573059Ea38ccC`
+
+| Contract | Sepolia | GembaBlockchain Testnet |
+|----------|---------|-------------------------|
+| GembaERC20Factory | `0x53eDC1058AF1f2358D3ede976081065b414a0Bba` | `0xf4E91c67665C0e3cd9552BCD39633EDe28691cC6` |
+| GembaERC20TaxFactory | `0x1ED31D4aB9FA8f6ca0C53e31e22E2c969CAE9CdB` | `0x5885360baE6e349e5D0B03d20F08dc57b3eaB7AA` |
+| GembaERC20AdvancedFactory | `0x99c950E41F889d9247674237f7B5c65ADaDE426B` | `0x925f751d84817F079389B0be1727ae06c7206def` |
+| GembaERC721Factory | `0x43e5c8a2703774fe1FD29E7814513723078A7567` | `0x81391720828956D533df4F7C3B764b36d1889666` |
+| GembaERC721AFactory | `0x186981c897D5F395a0B376Cb9752ffEb1c73880a` | `0x8855E0c69F4461FE0dE577eA443dad5c1dBbA465` |
+| GembaERC1155Factory | `0x21BedCc6641968697A46B780B3326Bfa96C062fC` | `0x0671fe22Ab79E59BB014F41A3a18d38b8850FF84` |
+| GembaPersonalWalletFactory | `0x72b1fdf87c995757FAa490A3F77c6CDEC67bDB70` | `0x5F10c9385b5620ed8FDAFD08c8e4BbD86D3DF0ce` |
+| GembaSwapRouter (audited, 30 bp) | `0x3c96FD37bFfD548898ba7CE11F97EB437A7B126B` | — |
 
 ---
 
@@ -300,7 +308,7 @@ Fee Recipient: `0x65124A08c9BFE0A7176668EE351573059Ea38ccC`
 
 | Source | Type | Description |
 |--------|------|-------------|
-| Token creation fees | One-time | 0.02–0.07 ETH per contract deployment |
+| Contract creation | One-time | €29–€199 per contract (EUR via GembaPay, or the same price in the network's coin) |
 | Swap platform fee | Recurring | 0.3% of every swap volume |
 | Presale & Gallery | Viral | Free — drives platform adoption and brand exposure via embed widgets |
 
@@ -340,7 +348,7 @@ GembaTools/
 
 | Platform | Token Types | Swap/DEX | Presale Platform | NFT Gallery | Verified | Non-Proxy | Price |
 |----------|-------------|----------|-----------------|-------------|----------|-----------|-------|
-| **Gemba Tools** | 6 types | ✅ Uniswap V3 | ✅ Page + Embed | ✅ + Embed | ✅ | ✅ | 0.02–0.07 ETH |
+| **Gemba Tools** | 7 types | ✅ Uniswap V3 | ✅ Page + Embed | ✅ + Embed | ✅ | ✅ | €29–€199 |
 | Bedrocktools | 3 types | ❌ | ❌ | ❌ | ✅ | ❌ (proxy) | 0.02–0.05 ETH |
 | SmartContracts.tools | 2 types | ❌ | ❌ | ❌ | ✅ | ✅ | 0.01–0.03 ETH |
 | Bitbond TokenTool | 4 types | ❌ | ❌ | ❌ | ✅ | ❌ | Subscription |

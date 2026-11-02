@@ -144,3 +144,51 @@ its intended use, subject to the off-chain signing follow-up in §4.
 **Slavcho Ivanov**
 Tech Lead, GembaIT
 2026-08-02
+
+---
+
+## Addendum — 2026-11-02: fee vouchers + PersonalWallet factory (self-audit, same author)
+
+**Still a self-audit** by the same author — not an independent audit. Scope: the changes below only; the 2026-08-02
+findings and fixes above are unchanged.
+
+**What changed**
+- `contracts/fees/FeeVoucher.sol` (new): every factory creates only with a one-time EIP-712 voucher signed by the
+  GembaTools backend, bound to creator (`msg.sender`), contract type, chain + factory (domain), a single-use
+  `orderId` and `expiresAt`. The voucher carries the native fee (`feeWei`, 0 when the fee was paid through
+  GembaPay). The fixed `creationFee` / `setCreationFee` were removed from all six factories.
+- `contracts/GembaPersonalWalletFactory.sol` (new) + `contracts/PersonalWallet.sol` (vendored byte-for-byte from
+  github.com/ivanovslavy/personal-wallet, creation keccak `0x520bb690…5322`, identical to the live wallets).
+
+**Threats considered → control → test**
+
+| Threat | Control | Proven by |
+|---|---|---|
+| Create without paying | no voucher → `BadVoucherSignature`; signer unset → nothing can be created | `11-fee-vouchers` (fail-closed, garbage sig, all 6 factories) |
+| Reuse one payment for many contracts | `usedVouchers[orderId]` burned on first use | `11` single-use; Foundry `replay` handler, 0 successes |
+| Use someone else's voucher | creator hashed in | `11` bound-to-creator; Foundry `steal` handler, 0 successes |
+| Pay for a cheap type, deploy an expensive one | `CONTRACT_TYPE` hashed in | `11` bound-to-type |
+| Replay on another chain / factory | EIP-712 domain (chainId, verifyingContract) | `11` bound-to-chain, bound-to-factory |
+| Pay less than the signed fee | `msg.value >= feeWei` → `InsufficientFee` | `07`, `11`; Foundry `underpay` handler, 0 successes |
+| Tamper the fee in a signed voucher | fee is signed | `11` fee-is-signed |
+| Stale authorisation | `expiresAt` | `11` expires |
+| Malleable signature twin | OpenZeppelin ECDSA (low-s only) | `11` malleable |
+| Reentrancy via the refund | `nonReentrant`, effects before the refund | `09` (attacker now holds two VALID vouchers) |
+| PersonalWallet built differently from the audited one | 0.8.28/viaIR/cancun override; keccak pinned; runtime == direct deployment | `12` (3 tests), Foundry fuzz checks `codehash` |
+| Strict wallet with no escape hatch | factory refuses (`StrictModeNeedsRecipient`) | `12` |
+| Factory as an owner (dead seat → 2-of-2) | factory refuses (`FactoryCannotOwn`) — **found by the new fuzzer** | `12`, `FuzzPersonalWalletFactory` |
+
+**Results:** Hardhat 73/73 (41 original + 16 voucher + 11 PersonalWallet factory + 5 mint-signer tool) ·
+Foundry: 3 invariants × 10 240 calls + 3 fuzz × 10 000 runs, pass · Slither on the new contracts: no high/medium
+(one `encode-packed-collision` informational: the packed value is CREATE initcode, never hashed or compared).
+Canaries: six defects re-introduced one at a time (single-use, signer check, expiry, fee check, creator hashing,
+strict-without-recipient) — each turned the suite red (3 / 9 / 1 / 2 / 38 / 1 failures), restored = green.
+
+**Deployed (testnets only, all verified):** see README → Deployed Contracts.
+
+**Off-chain follow-up from 2026-08-02 — now closed:** `tools/mint-signer.js` is the collection owner's signing
+tool for `mintWithSignature`; it signs `keccak(to, orderId, nonce, collection, chainId)` with a fresh random
+`orderId`, refuses non-owner keys, already-used (on-chain) and already-issued (journal) orderIds
+(`test/13-mint-signer.test.js`, 5 tests).
+
+*Signed:* Slavcho Ivanov — Tech Lead, GembaIT · 2026-11-02 (self-audit)
