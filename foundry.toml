@@ -10,6 +10,10 @@ evm_version = "cancun"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+# PersonalWallet is pinned to solc 0.8.28 and built by Hardhat (see hardhat.config.js overrides); the fuzz layer
+# reads its AUDITED creation code from the Hardhat artifact instead of recompiling it with another compiler.
+skip = ["contracts/PersonalWallet.sol"]
+fs_permissions = [{ access = "read", path = "./artifacts/contracts/PersonalWallet.sol" }]
 remappings = [
     "@openzeppelin/=node_modules/@openzeppelin/",
     "erc721a/=node_modules/erc721a/",

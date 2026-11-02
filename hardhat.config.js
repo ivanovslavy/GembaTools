@@ -20,14 +20,30 @@ const accounts = ALL_KEYS.length > 0 ? ALL_KEYS : [ZERO_KEY];
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.27",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.27",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          viaIR: true,
+          evmVersion: "cancun",
+        },
       },
-      viaIR: true,
-      evmVersion: "cancun",
+    ],
+    overrides: {
+      // PersonalWallet is vendored byte-for-byte from github.com/ivanovslavy/personal-wallet and MUST be built
+      // exactly as there (0.8.28, optimizer 200, viaIR, cancun) — test/11 proves the bytecode is identical.
+      "contracts/PersonalWallet.sol": {
+        version: "0.8.28",
+        settings: {
+          optimizer: { enabled: true, runs: 200 },
+          viaIR: true,
+          evmVersion: "cancun",
+        },
+      },
     },
   },
   networks: {
@@ -59,7 +75,7 @@ module.exports = {
     },
     // --- Testnets ---
     sepolia: {
-      url: process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org",
+      url: process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
       chainId: 11155111,
       accounts,
     },
@@ -73,6 +89,11 @@ module.exports = {
       chainId: 80002,
       accounts,
     },
+    gembatestnet: {
+      url: process.env.GEMBATESTNET_RPC_URL || "https://rpc1.gembascan.io",
+      chainId: 821207,
+      accounts,
+    },
     baseSepolia: {
       url: "https://sepolia.base.org",
       chainId: 84532,
@@ -82,6 +103,14 @@ module.exports = {
   etherscan: {
     // Etherscan v2: single API key works across all supported chains
     // https://docs.etherscan.io/etherscan-v2
-    apiKey: process.env.ETHERSCAN_API_KEY || "",
+    // One Etherscan V2 key for every Etherscan chain; Blockscout (gembascan) ignores it.
+    apiKey: process.env.ETHERSCAN_API_KEY || "blockscout",
+    customChains: [
+      {
+        network: "gembatestnet",
+        chainId: 821207,
+        urls: { apiURL: "https://gembascan.io/api", browserURL: "https://gembascan.io" },
+      },
+    ],
   },
 };
