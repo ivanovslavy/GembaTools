@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { ethers } = require("hardhat");
-const { deployAll, createERC20 } = require("./helpers/fixtures");
+const { deployAll, createERC20, vx } = require("./helpers/fixtures");
 
 describe("GembaERC20 (basic)", () => {
   it("mints full supply to owner with correct decimals", async () => {
@@ -27,8 +27,8 @@ describe("GembaERC20 (basic)", () => {
 
   it("constructor guards: empty name/symbol, long symbol, zero supply rejected (via factory)", async () => {
     const { erc20Factory, alice, FEE } = await loadFixture(deployAll);
-    await expect(erc20Factory.connect(alice).createToken("", "S", 18, 1n, { value: FEE })).to.be.reverted;
-    await expect(erc20Factory.connect(alice).createToken("N", "TOOLONGSYM", 18, 1n, { value: FEE })).to.be.reverted;
-    await expect(erc20Factory.connect(alice).createToken("N", "S", 18, 0n, { value: FEE })).to.be.reverted;
+    await expect(erc20Factory.connect(alice).createToken("", "S", 18, 1n, ...(await vx(erc20Factory, alice)), { value: FEE })).to.be.reverted;
+    await expect(erc20Factory.connect(alice).createToken("N", "TOOLONGSYM", 18, 1n, ...(await vx(erc20Factory, alice)), { value: FEE })).to.be.reverted;
+    await expect(erc20Factory.connect(alice).createToken("N", "S", 18, 0n, ...(await vx(erc20Factory, alice)), { value: FEE })).to.be.reverted;
   });
 });

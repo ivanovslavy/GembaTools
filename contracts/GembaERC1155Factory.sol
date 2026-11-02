@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./fees/FeeVoucher.sol";
 import "./GembaERC1155.sol";
 
 /**
@@ -13,10 +14,9 @@ import "./GembaERC1155.sol";
  *         Fee forwarded immediately to feeRecipient.
  *         Does NOT accept direct ETH transfers.
  */
-contract GembaERC1155Factory is Ownable, ReentrancyGuard {
+contract GembaERC1155Factory is Ownable, ReentrancyGuard, FeeVoucher {
 
     address public feeRecipient;
-    uint256 public creationFee;
 
     uint256 public constant MAX_IDS = 1000; // safety cap
 
@@ -43,16 +43,14 @@ contract GembaERC1155Factory is Ownable, ReentrancyGuard {
         uint256 timestamp
     );
     event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
-    event CreationFeeUpdated(uint256 oldFee, uint256 newFee);
 
     constructor(
         address owner_,
         address feeRecipient_,
-        uint256 creationFee_
-    ) Ownable(owner_) {
+        address voucherSigner_
+    ) Ownable(owner_) FeeVoucher(TYPE_ERC1155, voucherSigner_) {
         require(feeRecipient_ != address(0), "ERC1155Factory: zero fee recipient");
         feeRecipient = feeRecipient_;
-        creationFee = creationFee_;
     }
 
     /**
@@ -75,10 +73,10 @@ contract GembaERC1155Factory is Ownable, ReentrancyGuard {
         uint96 royaltyFee;
     }
 
-    function createToken(CreateParams calldata p)
+    function createToken(CreateParams calldata p, Voucher calldata voucher_, bytes calldata signature_)
         external payable nonReentrant returns (address collection)
     {
-        require(msg.value >= creationFee, "ERC1155Factory: insufficient fee");
+        _redeemVoucher(voucher_, signature_);
         require(p.numberOfIds > 0 && p.numberOfIds <= MAX_IDS, "ERC1155Factory: invalid ID count");
         require(p.supplyPerToken > 0, "ERC1155Factory: zero supply");
         require(p.royaltyFee <= 1000, "ERC1155Factory: royalty exceeds 10%");
@@ -113,14 +111,7 @@ contract GembaERC1155Factory is Ownable, ReentrancyGuard {
             p.numberOfIds, p.supplyPerToken, block.timestamp
         );
 
-        (bool sent, ) = payable(feeRecipient).call{value: creationFee}("");
-        require(sent, "ERC1155Factory: fee transfer failed");
-
-        uint256 excess = msg.value - creationFee;
-        if (excess > 0) {
-            (bool refunded, ) = payable(msg.sender).call{value: excess}("");
-            require(refunded, "ERC1155Factory: refund failed");
-        }
+        _settleFee(feeRecipient, voucher_.feeWei);
 
         return collection;
     }
@@ -134,8 +125,7 @@ contract GembaERC1155Factory is Ownable, ReentrancyGuard {
         feeRecipient = r;
     }
 
-    function setCreationFee(uint256 f) external onlyOwner {
-        emit CreationFeeUpdated(creationFee, f);
-        creationFee = f;
+    function setVoucherSigner(address newSigner) external onlyOwner {
+        _setVoucherSigner(newSigner);
     }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./fees/FeeVoucher.sol";
 import "./GembaERC721.sol";
 
 /**
@@ -12,10 +13,9 @@ import "./GembaERC721.sol";
  *         Fee forwarded immediately to feeRecipient.
  *         Does NOT accept direct ETH transfers.
  */
-contract GembaERC721Factory is Ownable, ReentrancyGuard {
+contract GembaERC721Factory is Ownable, ReentrancyGuard, FeeVoucher {
 
     address public feeRecipient;
-    uint256 public creationFee;
 
     struct CollectionInfo {
         address collectionAddress;
@@ -38,16 +38,14 @@ contract GembaERC721Factory is Ownable, ReentrancyGuard {
         uint256 timestamp
     );
     event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
-    event CreationFeeUpdated(uint256 oldFee, uint256 newFee);
 
     constructor(
         address owner_,
         address feeRecipient_,
-        uint256 creationFee_
-    ) Ownable(owner_) {
+        address voucherSigner_
+    ) Ownable(owner_) FeeVoucher(TYPE_ERC721, voucherSigner_) {
         require(feeRecipient_ != address(0), "ERC721Factory: zero fee recipient");
         feeRecipient = feeRecipient_;
-        creationFee = creationFee_;
     }
 
     /**
@@ -68,9 +66,11 @@ contract GembaERC721Factory is Ownable, ReentrancyGuard {
         string calldata baseURI_,
         string calldata contractURI_,
         address royaltyReceiver_,
-        uint96 royaltyFee_
+        uint96 royaltyFee_,
+        Voucher calldata voucher_,
+        bytes calldata signature_
     ) external payable nonReentrant returns (address collection) {
-        require(msg.value >= creationFee, "ERC721Factory: insufficient fee");
+        _redeemVoucher(voucher_, signature_);
         require(royaltyFee_ <= 1000, "ERC721Factory: royalty exceeds 10%");
 
         GembaERC721 newCollection = new GembaERC721(
@@ -98,14 +98,7 @@ contract GembaERC721Factory is Ownable, ReentrancyGuard {
 
         emit CollectionCreated(collection, msg.sender, name_, symbol_, maxSupply_, block.timestamp);
 
-        (bool sent, ) = payable(feeRecipient).call{value: creationFee}("");
-        require(sent, "ERC721Factory: fee transfer failed");
-
-        uint256 excess = msg.value - creationFee;
-        if (excess > 0) {
-            (bool refunded, ) = payable(msg.sender).call{value: excess}("");
-            require(refunded, "ERC721Factory: refund failed");
-        }
+        _settleFee(feeRecipient, voucher_.feeWei);
 
         return collection;
     }
@@ -119,8 +112,7 @@ contract GembaERC721Factory is Ownable, ReentrancyGuard {
         feeRecipient = r;
     }
 
-    function setCreationFee(uint256 f) external onlyOwner {
-        emit CreationFeeUpdated(creationFee, f);
-        creationFee = f;
+    function setVoucherSigner(address newSigner) external onlyOwner {
+        _setVoucherSigner(newSigner);
     }
 }

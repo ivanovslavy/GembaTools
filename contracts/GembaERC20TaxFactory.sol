@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./fees/FeeVoucher.sol";
 import "./GembaERC20Tax.sol";
 
 /**
@@ -14,10 +15,9 @@ import "./GembaERC20Tax.sol";
  *         Creation fee is forwarded immediately to feeRecipient.
  *         Does NOT accept direct ETH transfers.
  */
-contract GembaERC20TaxFactory is Ownable, ReentrancyGuard {
+contract GembaERC20TaxFactory is Ownable, ReentrancyGuard, FeeVoucher {
 
     address public feeRecipient;
-    uint256 public creationFee;
 
     struct TokenInfo {
         address tokenAddress;
@@ -44,21 +44,19 @@ contract GembaERC20TaxFactory is Ownable, ReentrancyGuard {
         uint256 timestamp
     );
     event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
-    event CreationFeeUpdated(uint256 oldFee, uint256 newFee);
 
     /**
      * @param owner_        Factory owner (can update fee settings)
      * @param feeRecipient_ Address that receives creation fees
-     * @param creationFee_  Fee in wei (e.g. 0.06 ether)
+     * @param voucherSigner_ Backend key that signs creation vouchers
      */
     constructor(
         address owner_,
         address feeRecipient_,
-        uint256 creationFee_
-    ) Ownable(owner_) {
+        address voucherSigner_
+    ) Ownable(owner_) FeeVoucher(TYPE_ERC20_TAX, voucherSigner_) {
         require(feeRecipient_ != address(0), "TaxFactory: zero fee recipient");
         feeRecipient = feeRecipient_;
-        creationFee = creationFee_;
     }
 
     /**
@@ -77,9 +75,11 @@ contract GembaERC20TaxFactory is Ownable, ReentrancyGuard {
         uint8 decimals_,
         uint256 supply_,
         address taxAddress_,
-        uint256 taxFee_
+        uint256 taxFee_,
+        Voucher calldata voucher_,
+        bytes calldata signature_
     ) external payable nonReentrant returns (address token) {
-        require(msg.value >= creationFee, "TaxFactory: insufficient fee");
+        _redeemVoucher(voucher_, signature_);
         require(taxAddress_ != address(0), "TaxFactory: zero tax address");
         require(taxFee_ > 0, "TaxFactory: zero tax fee");
         require(taxFee_ <= 2500, "TaxFactory: tax exceeds 25%");
@@ -113,16 +113,7 @@ contract GembaERC20TaxFactory is Ownable, ReentrancyGuard {
             supply_, taxAddress_, taxFee_, block.timestamp
         );
 
-        // Forward fee to recipient
-        (bool sent, ) = payable(feeRecipient).call{value: creationFee}("");
-        require(sent, "TaxFactory: fee transfer failed");
-
-        // Refund excess
-        uint256 excess = msg.value - creationFee;
-        if (excess > 0) {
-            (bool refunded, ) = payable(msg.sender).call{value: excess}("");
-            require(refunded, "TaxFactory: refund failed");
-        }
+        _settleFee(feeRecipient, voucher_.feeWei);
 
         return token;
     }
@@ -156,9 +147,8 @@ contract GembaERC20TaxFactory is Ownable, ReentrancyGuard {
         feeRecipient = newRecipient;
     }
 
-    function setCreationFee(uint256 newFee) external onlyOwner {
-        emit CreationFeeUpdated(creationFee, newFee);
-        creationFee = newFee;
+    function setVoucherSigner(address newSigner) external onlyOwner {
+        _setVoucherSigner(newSigner);
     }
 
     // No receive() or fallback() — reject direct ETH transfers

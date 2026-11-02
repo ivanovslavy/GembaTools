@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
-const { deployAll, createTax } = require("./helpers/fixtures");
+const { deployAll, createTax, vx } = require("./helpers/fixtures");
 
 describe("GembaERC20Tax", () => {
   it("taxes non-owner transfers, routes tax to taxAddress; owner in/out is tax-free", async () => {
@@ -23,7 +23,7 @@ describe("GembaERC20Tax", () => {
     await t.connect(bob).burn(1000n); // to == 0 → tax-free
     expect(await t.balanceOf(bob.address)).to.be.gte(0n);
     // over-cap deploy reverts
-    await expect(taxFactory.connect(alice).createToken("N", "S", 18, 1n, bob.address, 2501n, { value: FEE }))
+    await expect(taxFactory.connect(alice).createToken("N", "S", 18, 1n, bob.address, 2501n, ...(await vx(taxFactory, alice)), { value: FEE }))
       .to.be.reverted;
     // no setter for taxFee (immutable) — only setTaxAddress
     expect(t.setTaxFee).to.be.undefined;

@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "./GembaERC20Advanced.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./fees/FeeVoucher.sol";
 
 /**
  * @title GembaERC20AdvancedFactory
@@ -10,29 +11,26 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  *
  * Created via GembaTools — https://gembatools.io
  */
-contract GembaERC20AdvancedFactory is ReentrancyGuard {
+contract GembaERC20AdvancedFactory is ReentrancyGuard, FeeVoucher {
     address public owner;
     address public feeRecipient;
-    uint256 public creationFee;
 
     address[] public deployedContracts;
 
     event ContractDeployed(address indexed contractAddress, address indexed tokenOwner, string name, string symbol);
     event OwnerChanged(address indexed oldOwner, address indexed newOwner);
     event FeeRecipientChanged(address indexed oldRecipient, address indexed newRecipient);
-    event CreationFeeChanged(uint256 oldFee, uint256 newFee);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "GembaERC20AdvancedFactory: not owner");
         _;
     }
 
-    constructor(address owner_, address feeRecipient_, uint256 creationFee_) {
+    constructor(address owner_, address feeRecipient_, address voucherSigner_) FeeVoucher(TYPE_ERC20_ADVANCED, voucherSigner_) {
         require(owner_ != address(0), "GembaERC20AdvancedFactory: zero owner");
         require(feeRecipient_ != address(0), "GembaERC20AdvancedFactory: zero fee recipient");
         owner = owner_;
         feeRecipient = feeRecipient_;
-        creationFee = creationFee_;
     }
 
     function createToken(
@@ -47,10 +45,12 @@ contract GembaERC20AdvancedFactory is ReentrancyGuard {
         uint16 transferTax_,
         bool taxOnBuy_,
         bool taxOnSell_,
-        bool taxOnTransfer_
+        bool taxOnTransfer_,
+        Voucher calldata voucher_,
+        bytes calldata signature_
     ) external payable nonReentrant returns (address) {
         // ===== CHECKS =====
-        require(msg.value >= creationFee, "GembaERC20AdvancedFactory: insufficient fee");
+        _redeemVoucher(voucher_, signature_);
         require(bytes(name_).length > 0, "GembaERC20AdvancedFactory: empty name");
         require(bytes(symbol_).length > 0, "GembaERC20AdvancedFactory: empty symbol");
         require(totalSupply_ > 0, "GembaERC20AdvancedFactory: zero supply");
@@ -82,17 +82,7 @@ contract GembaERC20AdvancedFactory is ReentrancyGuard {
         deployedContracts.push(address(token));
         emit ContractDeployed(address(token), msg.sender, name_, symbol_);
 
-        // ===== INTERACTIONS =====
-        if (creationFee > 0) {
-            (bool sent, ) = feeRecipient.call{value: creationFee}("");
-            require(sent, "GembaERC20AdvancedFactory: fee transfer failed");
-        }
-
-        uint256 excess = msg.value - creationFee;
-        if (excess > 0) {
-            (bool refunded, ) = msg.sender.call{value: excess}("");
-            require(refunded, "GembaERC20AdvancedFactory: refund failed");
-        }
+        _settleFee(feeRecipient, voucher_.feeWei);
 
         return address(token);
     }
@@ -121,8 +111,7 @@ contract GembaERC20AdvancedFactory is ReentrancyGuard {
         feeRecipient = newRecipient;
     }
 
-    function setCreationFee(uint256 newFee) external onlyOwner {
-        emit CreationFeeChanged(creationFee, newFee);
-        creationFee = newFee;
+    function setVoucherSigner(address newSigner) external onlyOwner {
+        _setVoucherSigner(newSigner);
     }
 }

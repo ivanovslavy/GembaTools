@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { ethers } = require("hardhat");
-const { deployAll, createTax, createAdvanced, FEE } = require("./helpers/fixtures");
+const { deployAll, createTax, createAdvanced, FEE, vx } = require("./helpers/fixtures");
 
 describe("INVARIANTS", () => {
   it("Tax token: tax stays in-supply — Σ balances == totalSupply after taxed transfers", async () => {
@@ -36,7 +36,7 @@ describe("INVARIANTS", () => {
     const { erc20Factory, feeRecipient, alice, bob, carol } = await loadFixture(deployAll);
     const before = await ethers.provider.getBalance(feeRecipient.address);
     for (const u of [alice, bob, carol]) {
-      await erc20Factory.connect(u).createToken("N", "S", 18, 1n, { value: FEE });
+      await erc20Factory.connect(u).createToken("N", "S", 18, 1n, ...(await vx(erc20Factory, u)), { value: FEE });
     }
     expect(await ethers.provider.getBalance(feeRecipient.address)).to.equal(before + FEE * 3n);
   });

@@ -1,28 +1,30 @@
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { ethers } = require("hardhat");
-const { deployAll, FEE } = require("./helpers/fixtures");
+const { deployAll, FEE, vx } = require("./helpers/fixtures");
 
 describe("ATTACKS", () => {
   it("reentrant factory caller cannot re-enter createToken via the refund (DEFEATED)", async () => {
     const { erc20Factory, alice } = await loadFixture(deployAll);
     const A = await ethers.getContractFactory("ReentrantFactoryCaller");
     const atk = await A.deploy(await erc20Factory.getAddress());
-    // send 3×FEE so the refund (2×FEE) is enough to pass the fee check on re-entry,
-    // leaving nonReentrant as the thing that must stop it.
-    await atk.connect(alice).attack(FEE, { value: FEE * 3n });
+    // two VALID vouchers for the attacker contract + 3×FEE so the refund (2×FEE) also covers the fee on
+    // re-entry — leaving nonReentrant as the only thing that can stop it.
+    const a1 = await vx(erc20Factory, await atk.getAddress());
+    const a2 = await vx(erc20Factory, await atk.getAddress());
+    await atk.connect(alice).attack(...a1, ...a2, { value: FEE * 3n });
     expect(await atk.reenterAttempts()).to.equal(1n);
     expect(await atk.reenterReverted()).to.equal(true);
   });
 
   it("factory with a rejecting fee recipient fails CLOSED (deploy reverts, no silent loss)", async () => {
-    const { owner, alice } = await loadFixture(deployAll);
+    const { owner, alice, voucherSigner } = await loadFixture(deployAll);
     const Rej = await ethers.getContractFactory("RejectingReceiver");
     const rej = await Rej.deploy();
     const F = await ethers.getContractFactory("GembaERC20Factory");
-    const badFactory = await F.deploy(owner.address, await rej.getAddress(), FEE);
+    const badFactory = await F.deploy(owner.address, await rej.getAddress(), voucherSigner.address);
     // fee .call to the rejecting recipient reverts → whole createToken reverts
-    await expect(badFactory.connect(alice).createToken("N", "S", 18, 1n, { value: FEE })).to.be.reverted;
+    await expect(badFactory.connect(alice).createToken("N", "S", 18, 1n, ...(await vx(badFactory, alice)), { value: FEE })).to.be.reverted;
   });
 
   it("reentrant swap fee-recipient cannot re-enter the router (DEFEATED)", async () => {

@@ -4,8 +4,10 @@ pragma solidity ^0.8.24;
 // TEST-ONLY adversaries for the GembaTools audit suite. Each targets a specific
 // value path; all are expected to be DEFEATED (nonReentrant / CEI / fail-closed).
 
+struct VoucherMin { bytes32 orderId; uint256 feeWei; uint64 expiresAt; }
+
 interface IERC20FactoryMin {
-    function createToken(string calldata n, string calldata s, uint8 d, uint256 sup)
+    function createToken(string calldata n, string calldata s, uint8 d, uint256 sup, VoucherMin calldata v, bytes calldata sig)
         external payable returns (address);
 }
 
@@ -22,10 +24,17 @@ contract ReentrantFactoryCaller {
 
     constructor(address f) { factory = IERC20FactoryMin(f); }
 
-    function attack(uint256 fee) external payable {
+    // Two valid vouchers (different orderIds) for THIS contract as creator — so the only thing that can stop the
+    // re-entry is nonReentrant, not the voucher check.
+    VoucherMin private v2;
+    bytes private sig2;
+
+    function attack(VoucherMin calldata v1, bytes calldata sig1, VoucherMin calldata v2_, bytes calldata sig2_) external payable {
         armed = true;
+        v2 = v2_;
+        sig2 = sig2_;
         // pay fee + excess so the factory triggers the refund callback into receive()
-        factory.createToken{value: msg.value}("Re", "RE", 18, 1000);
+        factory.createToken{value: msg.value}("Re", "RE", 18, 1000, v1, sig1);
     }
 
     receive() external payable {
@@ -33,7 +42,7 @@ contract ReentrantFactoryCaller {
         armed = false;
         reenterAttempts++;
         // try to re-enter during the refund
-        try factory.createToken{value: msg.value}("Re2", "RE2", 18, 1000) {}
+        try factory.createToken{value: msg.value}("Re2", "RE2", 18, 1000, v2, sig2) {}
         catch { reenterReverted = true; }
     }
 }
@@ -43,8 +52,8 @@ contract ReentrantFactoryCaller {
 contract RejectingReceiver {
     IERC20FactoryMin public factory;
     function setFactory(address f) external { factory = IERC20FactoryMin(f); }
-    function createViaFactory(uint256 value) external payable returns (address) {
-        return factory.createToken{value: value}("X", "X", 18, 1000);
+    function createViaFactory(uint256 value, VoucherMin calldata v, bytes calldata sig) external payable returns (address) {
+        return factory.createToken{value: value}("X", "X", 18, 1000, v, sig);
     }
     receive() external payable { revert("no ETH"); }
 }
