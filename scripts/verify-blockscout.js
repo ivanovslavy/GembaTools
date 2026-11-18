@@ -1,12 +1,13 @@
-// Verifies scripts/deployed-vouchers-gembatestnet.json on gembascan (Blockscout v9). `hardhat verify` does not
+// Verifies scripts/deployed-vouchers-gembatestnet.json (or VERIFY_FILE=…, e.g. deployed-rocket-v2-gembatestnet.json) on gembascan (Blockscout v9). `hardhat verify` does not
 // speak Blockscout's protocol; its own v2 standard-input endpoint does (file in field "files[0]", contract_name
 // fully qualified). "verification started" is NOT success — this polls getsourcecode until the source is there.
 //   npx hardhat run scripts/verify-blockscout.js --network gembatestnet
 const { artifacts, ethers, network } = require("hardhat");
-const out = require(`./deployed-vouchers-${network.name}.json`);
+const out = require(process.env.VERIFY_FILE ? require("path").resolve(process.env.VERIFY_FILE) : `./deployed-vouchers-${network.name}.json`);
 const BASE = "https://gembascan.io";
 const NAMES = { erc20: "GembaERC20Factory", erc20tax: "GembaERC20TaxFactory", erc20advanced: "GembaERC20AdvancedFactory",
-  erc721: "GembaERC721Factory", erc721a: "GembaERC721AFactory", erc1155: "GembaERC1155Factory", personalWallet: "GembaPersonalWalletFactory" };
+  erc721: "GembaERC721Factory", erc721a: "GembaERC721AFactory", erc1155: "GembaERC1155Factory", personalWallet: "GembaPersonalWalletFactory",
+  rocket: "GembaRocketFactory", swapRouterV2: "GembaSwapRouterV2" };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function verified(addr) {

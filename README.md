@@ -35,6 +35,7 @@ Gemba Tools is a web-based SaaS platform where anyone can create and manage bloc
 | **ERC1155 Multi-Token** | Multi-token collection | €69 | 1–1000 token IDs, max supply per ID enforced, ERC2981 royalties, burn/burnBatch. No auto-mint at deploy. |
 | **ERC721A Advanced** | Gas-optimized NFT collection | €89 | ERC721A batch minting, owner-signed signature minting (one orderId = one mint), batch transfer/burn up to 100 NFTs. |
 | **ERC20 Advanced** | Token with tax, presale & anti-bot | €119 | Separate buy/sell/transfer tax (max 5 % each), built-in presale with buyer page and embed widget, anti-bot, exclusions, ban list. |
+| **Rocket Launch Token** | Fair-launch ERC20 with anti-bot guardian | €149 | The [Rocket Token](https://github.com/ivanovslavy/ERC20-Rocket) logic with the creator's own name, symbol and supply. Deployed together with its own **launcher**: 100 % of the supply + the coin go into a Uniswap V2 pair, trading opens and ownership is renounced in ONE transaction. Guardian for tier 1/2/3 blocks: 1/2/3 % max wallet on buys, 50/40/30 % sell tax **burned**; then no tax, no limit, no owner power. |
 | **Personal Wallet** | 2-of-3 multisig savings wallet | €199 | The separately audited [PersonalWallet](https://github.com/ivanovslavy/personal-wallet), byte-for-byte: 2 of 3 owners move funds, a new recipient needs all 3 + a 72 h timelock that any one owner can veto, strict recipient/token allowlists, native/ERC-20/ERC-721/ERC-1155. |
 
 **How the price is paid** (a backend switch, `GEMBAPAY_FEES` — see [docs/FEES.md](docs/FEES.md)):
@@ -49,7 +50,12 @@ There is no fixed on-chain fee any more (the old 0.02–0.07 "ETH on every chain
 
 ### SWAP — Integrated DEX
 
-Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
+Trade any ERC20 token via Uniswap with a 0.3% platform fee — V3 for ordinary tokens, **V2 for fee-on-transfer
+tokens** (Tax, Advanced and Rocket). A V3 pool reverts every sell of a taxed token (`IIA`: it demands exactly the
+amount it asked for and a taxed transfer delivers less — proved on a Sepolia fork, 18.11.2026), so the app routes
+those tokens to Uniswap V2 automatically, through **GembaSwapRouterV2** (same fee, same cap, same recipient as the
+V3 router; it moves the token straight between the wallet and the pair, so a taxed token is taxed once). On a
+network without Uniswap V3 (GembaBlockchain testnet) everything trades on V2.
 
 - **ETH ↔ Token** — platform fee from ETH
 - **Token ↔ ETH** — platform fee from ETH output
@@ -58,12 +64,15 @@ Trade any ERC20 token via Uniswap V3 with a 0.3% platform fee.
 - All swaps protected with `ReentrancyGuard` and `deadline` parameter
 - Price quotes via Uniswap V3 QuoterV2
 
-### LIQUIDITY — Uniswap V3 Management
+### LIQUIDITY — Uniswap V3 and V2 Management
 
-- **Add Liquidity** — create pools or add to existing ones, auto-creates pool if needed
-- **Your Positions** — view all V3 NFT positions with real token amounts
-- **Remove Liquidity** — partial or full removal with fee collection
-- **Lock Liquidity** — permanently lock by transferring position NFT to burn address (shows as "LP Burned" on DexScreener/TokenSniffer)
+- **Add Liquidity** — V3: create pools or add to existing ones (full range). Fee-on-transfer tokens (and every pair on
+  a V2-only network) go into a **Uniswap V2** pair; the pair is created if needed.
+- **Your Positions** — V3 position NFTs with real token amounts, and **V2 LP tokens** (ERC-20 — found from the tokens
+  you created / picked / the chain's list, or by pasting a pair or token address)
+- **Remove Liquidity** — V3: partial or full with fee collection. V2: 25/50/75/100 % straight from the pair to the
+  wallet (a taxed token is taxed once), then unwrap the wrapped coin at no fee
+- **Lock Liquidity** — V3: transfer the position NFT to the burn address. V2: send LP tokens to `0x…dEaD`
 
 ### MANAGE — Token & NFT Management
 
@@ -150,7 +159,7 @@ The token/NFT templates emit `CreatedViaGembaTools(address indexed token, string
 
 ## Contracts Overview
 
-### Token Contracts (6 types)
+### Token Contracts (7 types)
 
 **GembaERC20** — Standard ERC20 with burn support. OpenZeppelin v5.
 
@@ -168,7 +177,20 @@ The token/NFT templates emit `CreatedViaGembaTools(address indexed token, string
 - Address exclusions: manual exclude, optional presale buyer exclusion or reduced rate
 - Ban list: owner can ban addresses (cannot ban self)
 - DEX pair detection: owner adds LP pair addresses for buy/sell tax logic
-- Compatible with Uniswap V2 and V3
+- Trades on Uniswap V2 — a taxed transfer cannot be sold out of a V3 pool; the app routes it automatically
+
+**GembaRocketToken + GembaRocketLauncher + GembaRocketFactory (Rocket, type 8)** — the Rocket Token logic
+(v2 hardening, 16.11.2026) with one change: name, symbol and supply are the creator's.
+- The factory deploys, in one call, the **launcher** (owned by the creator) and the **token** (minted 100 % to the
+  launcher and owned by it), then binds them. Nobody — creator, factory, anyone — can call `setLp` / `executeTrading`
+  except through the launcher, so the original one-way `setLp` trap cannot happen.
+- `launcher.launch{value}(lpRecipient)` in ONE transaction: 100 % of the supply + the coin into the V2 pair
+  (created if missing; liquidity minted through `pair.mint`, so a dust "griefing" sync into an empty pair cannot
+  block the launch), LP tokens to `lpRecipient`, `setLp(pair)` (validated against the V2 factory),
+  `executeTrading()`, `renounceOwnership()`.
+- Guardian for tier1/2/3 BLOCKS from the opening block: max wallet on buys 1/2/3 % of the supply, sell tax
+  50/40/30 % **burned**; tier3 ≤ 300 blocks (`MAX_TIER3`). After the window: no tax, no limit.
+- Name 1–64 chars, symbol 1–8, supply 1 … 10^18 whole tokens (18 decimals).
 
 **GembaERC721** — NFT collection with ERC2981 royalties. Auto-appends `.json` to tokenURI. Configurable URI suffix via `setURISuffix()`. Mint, mintBatch, burn.
 
@@ -195,6 +217,14 @@ The token/NFT templates emit `CreatedViaGembaTools(address indexed token, string
 - `ReentrancyGuard` + `deadline` on all functions
 - Max fee hardcapped at 1% (100bp)
 - Owner can adjust fee and fee recipient
+
+**GembaSwapRouterV2** — the Uniswap V2 sibling, for fee-on-transfer tokens. Same settings: 30 bp, 1 % cap, fee in
+the native coin to the same recipient, same owner (set in the constructor).
+- `swapETHForTokens` / `swapTokensForETH` / `swapTokensForTokens` (through WETH, fee between the hops)
+- Its own V2 swap loop: the token goes **from the wallet straight to the pair** (one transfer → taxed once — routing
+  through Uniswap's V2 router would tax it twice), the input is measured from the pair's real balance, the output
+  from the recipient's real balance before `amountOutMin` is checked
+- `ReentrancyGuard` + `deadline`; accepts ETH only from WETH; keeps nothing (proved over 40 randomized cases)
 
 ---
 
@@ -284,10 +314,10 @@ The deploy record is written to `scripts/deployed-vouchers-<network>.json`.
 
 | Network | Chain ID | Native coin | What is deployed |
 |---------|----------|-------------|------------------|
-| Sepolia | 11155111 | ETH | 7 factories (voucher-gated) + GembaSwapRouter (Uniswap V3) |
-| GembaBlockchain Testnet | 821207 | GMB | 7 factories (voucher-gated); no swap (no Uniswap V3 there) |
+| Sepolia | 11155111 | ETH | 8 factories (voucher-gated) + GembaSwapRouter (Uniswap V3) + GembaSwapRouterV2 (Uniswap V2) |
+| GembaBlockchain Testnet | 821207 | GMB | 8 factories (voucher-gated) + GembaSwapRouterV2 (the chain's Uniswap V2; there is no V3) |
 
-### Deployed Contracts (2026-11-02, all verified)
+### Deployed Contracts (all verified)
 
 Voucher signer (backend key): `0xcbD92139F15108Dc95590D74dC8A83a4946CE535` · Owner: `0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298` · Fee recipient: `0x65124A08c9BFE0A7176668EE351573059Ea38ccC`
 
@@ -301,6 +331,14 @@ Voucher signer (backend key): `0xcbD92139F15108Dc95590D74dC8A83a4946CE535` · Ow
 | GembaERC1155Factory | `0x21BedCc6641968697A46B780B3326Bfa96C062fC` | `0x0671fe22Ab79E59BB014F41A3a18d38b8850FF84` |
 | GembaPersonalWalletFactory | `0x72b1fdf87c995757FAa490A3F77c6CDEC67bDB70` | `0x5F10c9385b5620ed8FDAFD08c8e4BbD86D3DF0ce` |
 | GembaSwapRouter (audited, 30 bp) | `0x3c96FD37bFfD548898ba7CE11F97EB437A7B126B` | — |
+| GembaRocketFactory (18.11.2026) | `0x255D8ec901C01Ecf2193ADF8e8ab51dA5F265bf9` | `0x71Db662b9B0489B382C5fA82Ed211e2E662F385C` |
+| GembaSwapRouterV2 (18.11.2026, 30 bp) | `0x6Dd6D546b75b5146C1e4D9fBd436892B6DEbA7FE` | `0x3b540321147dD267FA178Cb6bffA5E80E3CD9218` |
+
+Uniswap V2 venue — Sepolia: factory `0xF62c03E08ada871A0bEb309762E260a7a6a880E6`, router `0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3`,
+WETH `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14` · GembaBlockchain testnet: factory `0x15752A99d2e06d001F5d228AA158EbD687276DB4`,
+router `0x49Da581bf5C09aE24312574D4835d416EE5eEfd5`, WGMB `0x4A74DB9c9cE285960d01B53a626945DDd100e8d8`. Deployed with
+`scripts/deploy-rocket-v2.js` (records in `scripts/deployed-rocket-v2-<network>.json`); Sepolia verified on Etherscan,
+GembaBlockchain on gembascan (`VERIFY_FILE=… scripts/verify-blockscout.js`).
 
 ---
 
@@ -309,7 +347,7 @@ Voucher signer (backend key): `0xcbD92139F15108Dc95590D74dC8A83a4946CE535` · Ow
 | Source | Type | Description |
 |--------|------|-------------|
 | Contract creation | One-time | €29–€199 per contract (EUR via GembaPay, or the same price in the network's coin) |
-| Swap platform fee | Recurring | 0.3% of every swap volume |
+| Swap platform fee | Recurring | 0.3% of every swap volume — V3 and V2 routers alike |
 | Presale & Gallery | Viral | Free — drives platform adoption and brand exposure via embed widgets |
 
 ---

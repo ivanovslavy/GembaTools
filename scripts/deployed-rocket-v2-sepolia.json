@@ -1,0 +1,41 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0xe95fda44150FCACF9718B7517625901e72869014",
+  "owner": "0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298",
+  "feeRecipient": "0x65124A08c9BFE0A7176668EE351573059Ea38ccC",
+  "voucherSigner": "0xcbD92139F15108Dc95590D74dC8A83a4946CE535",
+  "venue": {
+    "factory": "0xF62c03E08ada871A0bEb309762E260a7a6a880E6",
+    "weth": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "router": "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3"
+  },
+  "deployedAt": "2026-11-18T10:59:33.025Z",
+  "contracts": {
+    "rocket": {
+      "address": "0x255D8ec901C01Ecf2193ADF8e8ab51dA5F265bf9",
+      "tx": "0xecaf5a8ee9121e2bc940c4bce4e7a621a8c3917eb4c8ced8eeceefac0d76dbcc",
+      "block": 12161020,
+      "args": [
+        "0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298",
+        "0x65124A08c9BFE0A7176668EE351573059Ea38ccC",
+        "0xcbD92139F15108Dc95590D74dC8A83a4946CE535",
+        "0xF62c03E08ada871A0bEb309762E260a7a6a880E6",
+        "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+      ]
+    },
+    "swapRouterV2": {
+      "address": "0x6Dd6D546b75b5146C1e4D9fBd436892B6DEbA7FE",
+      "tx": "0x0b6e1611685fd00d2940458f8fc985da821efd103ad458de94dba8e112cc8636",
+      "block": 12161021,
+      "args": [
+        "0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298",
+        "0xF62c03E08ada871A0bEb309762E260a7a6a880E6",
+        "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+        "0x65124A08c9BFE0A7176668EE351573059Ea38ccC",
+        "30"
+      ]
+    }
+  },
+  "spentWei": "0"
+}

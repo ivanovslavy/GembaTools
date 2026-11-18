@@ -192,3 +192,61 @@ tool for `mintWithSignature`; it signs `keccak(to, orderId, nonce, collection, c
 (`test/13-mint-signer.test.js`, 5 tests).
 
 *Signed:* Slavcho Ivanov — Tech Lead, GembaIT · 2026-11-02 (self-audit)
+
+---
+
+## Addendum — 2026-11-18: Uniswap V2 router + Rocket launch token (self-audit, same author)
+
+**Still a self-audit** by the same author — not an independent audit. Scope: the four new contracts below; nothing
+deployed before is changed (`FeeVoucher` only gained the constant `TYPE_ROCKET = 8`).
+
+**Why.** A fee-on-transfer token (GembaTools Tax and Advanced) in a Uniswap V3 pool can be bought but never sold:
+the pool demands exactly `amountIn`, a taxed transfer delivers less, and every sell reverts `IIA` — for strangers
+and for the tax-exempt owner alike (the router → pool hop is taxed). Proved on a Sepolia fork with the GembaTools
+addresses. Such tokens must trade on Uniswap V2.
+
+**What was added**
+- `GembaSwapRouterV2` — V2 sibling of `GembaSwapRouter`: 30 bp, 1 % hard cap, fee in the native coin, owner from the
+  constructor. Its own fee-on-transfer-safe swap loop (Uniswap V2 math, 997/1000): the token goes from the wallet
+  straight to the pair (taxed once), input measured from the pair's balance, output from the recipient's balance.
+- `GembaRocketToken` — the Rocket Token (ERC20-Rocket v2, 16.11.2026) with name/symbol/supply as parameters.
+- `GembaRocketLauncher` — the only way to go live: 100 % supply + coin into the V2 pair via `pair.mint`, `setLp`,
+  `executeTrading`, `renounceOwnership` in one transaction; owner = creator, bound to its token once by the factory.
+- `GembaRocketFactory` — voucher-gated (type 8), deploys launcher + token + binds them in one call.
+
+**Threats considered → control → test** (`test/14-rocket-and-v2router.test.js`, real Uniswap V2 bytecode)
+
+| Threat | Control | Proven by |
+|---|---|---|
+| Taxed token sold twice-taxed (via an intermediate router hop) | token moves wallet → pair directly | "taxed ONCE" + 40-case randomized property |
+| Platform fee skimmed or wrong | `fee = in × 30 / 10000`, exact; router keeps nothing | exact-fee assertions; router ETH/WETH balance 0 after 40 cases |
+| Sandwich / bad price | `amountOutMin` checked against what the wallet REALLY received | "amountOutMin … REALLY received" |
+| Stale tx | `deadline` | deadline test |
+| Stray ETH into the router | `receive` only from WETH | "only weth" |
+| Fee / recipient hijack, fee above 1 % | `onlyOwner`, `MAX_FEE = 100` | settings test |
+| Rocket opened out of order (the original one-way `setLp` trap) | token owned by the launcher; creator/factory/anyone get `OwnableUnauthorizedAccount` | "nobody can go around the launcher" |
+| Someone else launches / re-binds the launcher | `NotOwner`, `NotDeployer`, `TokenAlreadySet` | same |
+| Partial launch, team allocation | supply in launcher must equal `totalSupply` | "launch is atomic" |
+| Launch blocked by a dust sync into an empty pair (stock router quote divides by zero) | liquidity via `pair.mint` | "griefing does not block the launch" |
+| Sniper window between liquidity and `setLp` | one transaction | "launch is atomic" |
+| Honeypot by parameter (endless guardian) | `tier3 ≤ 300` | "rejects bad configs" |
+| Pay for a cheap type, deploy a Rocket | `CONTRACT_TYPE = 8` in the voucher | "a voucher of another type…" |
+
+**Canaries** — eight defects re-introduced one at a time, each turned test 14 red, restored = green:
+`amountOutMin` unchecked (1 failing) · fee not taken (2) · token routed wallet → router → pair (2) · launch not
+owner-gated (1) · no renounce (1) · stock-router precondition instead of `pair.mint` (1) · tier3 uncapped (1) ·
+voucher not redeemed (1).
+
+**Real venues (forks, the factory + router as deployed):** Sepolia (official Uniswap V2) and GembaBlockchain testnet
+(its V2, WGMB) — create → launch through the launcher → buy → sell with the guardian tax burned → platform fee exact.
+
+**Slither** (`--exclude-informational --exclude-low`): no high. Findings and why they stand:
+`arbitrary-send-eth` in `swapTokensForETH` — the destination is `msg.sender`, the swapper itself;
+`incorrect-equality` — `fee == 0` (skip), `supply != totalSupply` (deliberate fair-launch rule), the guardian tier
+views (`b == 0`); `unused-return` — the `blockTimestampLast` of `getReserves`.
+
+**Results:** Hardhat 86/86 (73 + 13 new). App e2e on forks: see GembaTools-app `e2e/specs/07`, `08`.
+
+**Deployed 2026-11-18 (testnets only, verified):** see README → Deployed Contracts.
+
+*Signed:* Slavcho Ivanov — Tech Lead, GembaIT · 2026-11-18 (self-audit)

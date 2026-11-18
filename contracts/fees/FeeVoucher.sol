@@ -40,6 +40,7 @@ abstract contract FeeVoucher is EIP712 {
     uint8 internal constant TYPE_ERC721A = 5;
     uint8 internal constant TYPE_ERC1155 = 6;
     uint8 internal constant TYPE_PERSONAL_WALLET = 7;
+    uint8 internal constant TYPE_ROCKET = 8;
 
     struct Voucher {
         bytes32 orderId;

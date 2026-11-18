@@ -7,7 +7,7 @@ Sepolia has and GembaBlockchain does not).
 
 | Layer | Tool | What it does |
 |-------|------|--------------|
-| unit / access / attacks / invariants | Hardhat + Mocha/Chai | 73 tests (41 original + 16 fee-voucher + 11 PersonalWallet factory + 5 owner mint-signer tool) |
+| unit / access / attacks / invariants | Hardhat + Mocha/Chai | 86 tests (41 original + 16 fee-voucher + 11 PersonalWallet factory + 5 owner mint-signer tool + 13 Rocket / GembaSwapRouterV2 on the official Uniswap V2 bytecode, incl. a 40-case randomized property) |
 | property fuzzing + stateful invariants | Foundry (`forge`) | 3 fuzz ×10 000 runs + 3 invariants ×10 240 calls (incl. replayed / stolen / under-paid vouchers, PersonalWallet owner sets) |
 | static analysis | Slither | 33 results, 0 high (see classification below) |
 | symbolic execution | Mythril | all 13 production contracts — 0 issues |
@@ -31,7 +31,8 @@ suite needs (funding key, sweep targets, Sepolia RPC, Uniswap V3 addresses).
 
 ## 1. Hardhat suite (unit + access + attacks + invariants)
 ```bash
-npx hardhat test                 # all 73 tests
+npx hardhat test                 # all 86 tests
+npx hardhat test test/14-rocket-and-v2router.test.js   # Rocket + V2 router only (real Uniswap V2 venue, @uniswap/v2-core + v2-periphery)
 npx hardhat coverage             # line/branch coverage
 ```
 Files (`test/`): `helpers/fixtures.js` deploys all 6 factories + the swap router
