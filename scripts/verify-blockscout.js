@@ -7,7 +7,7 @@ const out = require(process.env.VERIFY_FILE ? require("path").resolve(process.en
 const BASE = "https://gembascan.io";
 const NAMES = { erc20: "GembaERC20Factory", erc20tax: "GembaERC20TaxFactory", erc20advanced: "GembaERC20AdvancedFactory",
   erc721: "GembaERC721Factory", erc721a: "GembaERC721AFactory", erc1155: "GembaERC1155Factory", personalWallet: "GembaPersonalWalletFactory",
-  rocket: "GembaRocketFactory", swapRouterV2: "GembaSwapRouterV2" };
+  rocket: "GembaRocketFactory", swapRouterV2: "GembaSwapRouterV2", swapRouter: "GembaSwapRouter" };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function verified(addr) {
