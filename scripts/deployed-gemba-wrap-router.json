@@ -1,0 +1,12 @@
+{
+  "network": "gembatestnet",
+  "chainId": 821207,
+  "deployedAt": "2026-11-19T22:23:11.878Z",
+  "deployer": "0xe95fda44150FCACF9718B7517625901e72869014",
+  "gembaSwapRouter": "0x3783d93A08dB32Dc0e9B36Ad510f1B234F75010C",
+  "WETH9": "0x4A74DB9c9cE285960d01B53a626945DDd100e8d8",
+  "feeRecipient": "0x65124A08c9BFE0A7176668EE351573059Ea38ccC",
+  "platformFee": "30",
+  "owner": "0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298",
+  "note": "wrap/unwrap only — the V3 router slot holds the V2 router as a placeholder"
+}
