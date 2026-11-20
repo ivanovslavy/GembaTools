@@ -1,0 +1,110 @@
+{
+  "network": "gembatestnet",
+  "chainId": 821207,
+  "at": "2026-11-20T01:04:46.670Z",
+  "oldOwner": "0x8eB8Bf106EbC9834a2586D04F73866C7436Ce298",
+  "newOwner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+  "newFeeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+  "contracts": {
+    "erc20": {
+      "address": "0xf4E91c67665C0e3cd9552BCD39633EDe28691cC6",
+      "txs": {
+        "setFeeRecipient": "0x068591586b409b24e0bdc611fb8ba47a28e9e67dc0423c83d758ce70fd4f4a61",
+        "transferOwnership": "0x77e3c3775d1bc2c6a08b77b94d2ae26a2be8d1497bc3c95997de30e2e51631d5"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "erc20tax": {
+      "address": "0x5885360baE6e349e5D0B03d20F08dc57b3eaB7AA",
+      "txs": {
+        "setFeeRecipient": "0x2f61e1f616554abb058725b63f05d146b1764577efaa27665c0ebc0ea348410a",
+        "transferOwnership": "0xaba6c215ab838eed3a529d160c25bdbe096d33726cd389ede2992de66000062c"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "erc20advanced": {
+      "address": "0x925f751d84817F079389B0be1727ae06c7206def",
+      "txs": {
+        "setFeeRecipient": "0x11e78b03c2b54deaeebec5cdb501657dfba07e02f82185334fb18539c12d8560",
+        "setOwner": "0x8a6e417dce1d32ddc84a732fb460c911c0b0987fb9d0881f6079add2b58ac888"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "erc721": {
+      "address": "0x81391720828956D533df4F7C3B764b36d1889666",
+      "txs": {
+        "setFeeRecipient": "0x60eaf044e77b18f43bc818d0c3cd6a281d17729ab022bb90719066c0fe5634fd",
+        "transferOwnership": "0x5b497ed5311d07df691d968df162a368f3bcb32569dfae4deb8f2f3e0b71f000"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "erc721a": {
+      "address": "0x8855E0c69F4461FE0dE577eA443dad5c1dBbA465",
+      "txs": {
+        "setFeeRecipient": "0x75126ca0cf4bc94781cf17f9d4af7c924c832d85a9c529f77046d1088dcb4b1d",
+        "setOwner": "0xdf8d58b53071aff95e8808d282c168b7834975f4d1946b347a36d1cd43146a74"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "erc1155": {
+      "address": "0x0671fe22Ab79E59BB014F41A3a18d38b8850FF84",
+      "txs": {
+        "setFeeRecipient": "0x81a456ba667a3570c5447bbb4f7aac9d6b04a6f3ab78eca2e88d9d9db60611ce",
+        "transferOwnership": "0x2f4a80142f4cb6c8d3b038c2cdd6ecc091e8dba124806cef3e715d44a5930290"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "personalWallet": {
+      "address": "0x5F10c9385b5620ed8FDAFD08c8e4BbD86D3DF0ce",
+      "txs": {
+        "setFeeRecipient": "0xa8712debb8246530c2ac447bbf38713073c13871544cb55d9a923c7e54e9f416",
+        "transferOwnership": "0x83f1275dd7941825e75e1bca8669fabd3ae9ed773e2619457e42598ff2988c7a"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "rocket": {
+      "address": "0x71Db662b9B0489B382C5fA82Ed211e2E662F385C",
+      "txs": {
+        "setFeeRecipient": "0xa0e5fc2aefc264e41fafb107501a049f05a7596c588eb3487015f687da148a3d",
+        "transferOwnership": "0x506cfb7f94a13d931ea22d0e6b6b399a5065fee33859b68398e76d83ccf8c914"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "swapRouterV2": {
+      "address": "0x3b540321147dD267FA178Cb6bffA5E80E3CD9218",
+      "txs": {
+        "setFeeRecipient": "0x316dd4742f3d1f07892728d909d6e018d5516375945328e9265fa0c5bfa3283d",
+        "transferOwnership": "0xaa22a162d88947e7d617448ff575b41c3843bfebb170983219ea48bbcc6650ad"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    },
+    "wrapRouter": {
+      "address": "0x3783d93A08dB32Dc0e9B36Ad510f1B234F75010C",
+      "txs": {
+        "setFeeRecipient": "0x295b525983c3ab4bcc127b526114379e3f75ab471417f9f28297d7e06372a738",
+        "transferOwnership": "0xe260da2a90c1e4655114a73f8aa694353e0fa224c338723d9d75b25a12320018"
+      },
+      "status": "moved",
+      "owner": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225",
+      "feeRecipient": "0xB0Bf76b7BE2DA59DF1332754701b74b3f4e73225"
+    }
+  }
+}

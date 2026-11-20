@@ -33,6 +33,12 @@ const CONTRACTS = {
   },
 };
 const SET_OWNER = new Set(["erc20advanced", "erc721a"]);
+// On Sepolia the old owner is an EIP-7702 smart account: nodes allow ONE in-flight tx and a load-balanced public RPC
+// lags a block — so: settle after every tx, and re-read until the chain shows the change.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function eventually(read, want, tries = 15) {
+  let v; for (let i = 0; i < tries; i++) { v = await read(); if (v.toLowerCase() === want.toLowerCase()) return v; await sleep(3000); } return v;
+}
 const ABI = [
   "function owner() view returns (address)", "function feeRecipient() view returns (address)",
   "function setFeeRecipient(address)", "function transferOwnership(address)", "function setOwner(address)",
@@ -68,13 +74,14 @@ async function main() {
         if (owner.toLowerCase() !== OLD_OWNER.toLowerCase()) throw new Error(`owner() is ${owner}, not the old owner`);
         if ((await c.feeRecipient()).toLowerCase() !== NEW_FEE.toLowerCase()) {
           const t1 = await c.setFeeRecipient(NEW_FEE); await t1.wait(); rec.txs.setFeeRecipient = t1.hash;
+          await eventually(() => c.feeRecipient(), NEW_FEE); await sleep(2000);
         }
         // the Advanced-token and ERC721A factories name it setOwner(); every other contract is OZ transferOwnership()
         const fn = SET_OWNER.has(k) ? "setOwner" : "transferOwnership";
-        const t2 = await c[fn](NEW_OWNER); await t2.wait(); rec.txs[fn] = t2.hash;
+        const t2 = await c[fn](NEW_OWNER); await t2.wait(); rec.txs[fn] = t2.hash; await sleep(2000);
         rec.status = "moved";
       }
-      owner = await c.owner(); const fee = await c.feeRecipient();
+      owner = await eventually(() => c.owner(), NEW_OWNER); const fee = await eventually(() => c.feeRecipient(), NEW_FEE);
       rec.owner = owner; rec.feeRecipient = fee;
       const ok = owner.toLowerCase() === NEW_OWNER.toLowerCase() && fee.toLowerCase() === NEW_FEE.toLowerCase();
       if (!ok) { failed++; rec.status = "READ-BACK MISMATCH"; }
